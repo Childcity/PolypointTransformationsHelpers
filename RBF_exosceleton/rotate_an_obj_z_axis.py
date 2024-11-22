@@ -26,7 +26,7 @@ for v in vs:
     d = (x**2 + y**2) ** 0.5
     new_x = math.sin(a + angle) * d
     new_y = math.cos(a + angle) * d
-    new_z = z 
+    new_z = z
     new_vs += [[new_x, new_y, new_z]]
 
 f = open(OUTPUT, 'w')
