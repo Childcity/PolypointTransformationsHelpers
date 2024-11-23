@@ -1,7 +1,7 @@
 # Blender v3.0.1 OBJ File: ''
 # www.blender.org
 mtllib bunny_initial_decimated.mtl
-o Stanford_Bunny
+# o Stanford_Bunny
 v 55.333210 7.326521 29.484470
 v 56.666573 6.448046 0.426148
 v -8.294665 52.925663 25.041508

@@ -6,6 +6,17 @@ MODEL_TO_COMPARE_WITH = 'bunny_rotated_z_10.obj'
 DEFORMATION_BASIS_FROM = 'bunny_decimated.obj'
 DEFORMATION_BASIS_TO = 'bunny_decimated_rotated_z_10.obj'
 
+DEFORMATION_INPUT = './obj/bunny/bunny_1.obj'
+MODEL_TO_COMPARE_WITH = './obj/bunny/bunny_1.obj'
+DEFORMATION_BASIS_FROM = './obj/bunny/bunny_decimated_1.obj'
+DEFORMATION_BASIS_TO = './obj/bunny/bunny_decimated_1_screwed_div_50.obj'
+DEFORMATION_BASIS_TO = './obj/bunny/bunny_decimated_1_waved_a_10_t_10.obj'
+
+DEFORMATION_INPUT = './obj/bunny/bunny.obj'
+DEFORMATION_BASIS_FROM = './obj/bunny/bunny_decimated_0.obj'
+DEFORMATION_BASIS_TO = './obj/bunny/bunny_decimated_0_screwed_div_50.obj'
+DEFORMATION_BASIS_TO = './obj/bunny/bunny_decimated_0_waved_a_10_t_10.obj'
+
 f = open(DEFORMATION_INPUT, 'r')
 di = f.read()
 f.close()
@@ -82,6 +93,6 @@ for v in di_vs:
     new_z = v[2] + RBF(v, Yzs, dbf_vs)
     deformed_vertices += [[new_x, new_y, new_z]]
 
-f = open('__rbf_deformed.obj', 'w')
+f = open(DEFORMATION_BASIS_TO.split('/')[-1].replace('bunny_decimated', 'result_rbf_deformed'), 'w+')
 f.write(str_from_vertexes(deformed_vertices) + str_from_faces(di_ts))
 f.close()
