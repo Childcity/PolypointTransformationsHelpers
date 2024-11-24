@@ -1,5 +1,6 @@
 from obj_io import *
 import numpy as np
+import time
 
 DEFORMATION_INPUT = 'bunny.obj'
 MODEL_TO_COMPARE_WITH = 'bunny_rotated_z_10.obj'
@@ -11,7 +12,7 @@ MODEL_TO_COMPARE_WITH = './obj/bunny/bunny_1.obj'
 DEFORMATION_BASIS_FROM = './obj/bunny/bunny_decimated_1.obj'
 DEFORMATION_BASIS_TO = './obj/bunny/bunny_decimated_1_screwed_div_50.obj'
 DEFORMATION_BASIS_TO = './obj/bunny/bunny_decimated_1_screwed_div_30.obj'
-#DEFORMATION_BASIS_TO = './obj/bunny/bunny_decimated_1_waved_a_10_t_10.obj'
+DEFORMATION_BASIS_TO = './obj/bunny/bunny_decimated_1_waved_a_10_t_10.obj'
 
 # DEFORMATION_INPUT = './obj/bunny/bunny.obj'
 # DEFORMATION_BASIS_FROM = './obj/bunny/bunny_decimated_0.obj'
@@ -87,12 +88,16 @@ Yxs = Ys_for_points(dbf_vs, dxs)
 Yys = Ys_for_points(dbf_vs, dys)
 Yzs = Ys_for_points(dbf_vs, dzs)
 
+start_time = time.time()
+
 deformed_vertices = []
 for v in di_vs:
     new_x = v[0] + RBF(v, Yxs, dbf_vs)
     new_y = v[1] + RBF(v, Yys, dbf_vs)
     new_z = v[2] + RBF(v, Yzs, dbf_vs)
     deformed_vertices += [[new_x, new_y, new_z]]
+
+print(f"Transformation took: {time.time() - start_time} seconds")
 
 f = open(DEFORMATION_BASIS_TO.split('/')[-1].replace('bunny_decimated', 'result_rbf_deformed'), 'w+')
 f.write(str_from_vertexes(deformed_vertices) + str_from_faces(di_ts))
