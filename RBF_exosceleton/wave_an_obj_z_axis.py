@@ -2,33 +2,41 @@ import sys
 import math
 from obj_io import *
 
-if len(sys.argv) < 4:
+def wave_an_obj_z_axis(INPUT, amplitude, period):
+    OUTPUT = INPUT.replace('.obj', f'_waved_a_{amplitude}_t_{period}.obj')
+
+    f = open(INPUT, 'r')
+    di = f.read()
+    f.close()
+    vs = vertexes(di)
+    ts = triangles(di)
+
+    new_vs = []
+    for v in vs:
+        x = v[0]
+        y = v[1]
+        z = v[2]
+        skew = amplitude * math.sin(z/period)
+        new_x = x + skew
+        new_y = y
+        new_z = z
+        new_vs += [[new_x, new_y, new_z]]
+
+    f = open(OUTPUT, 'w')
+    f.write(str_from_vertexes(new_vs) + str_from_faces(ts))
+    f.close()
+
+def generate_waved():
+    in_model_path = './obj/bunny/bunny_1.obj'
+    period = 10
+    #wave_an_obj_z_axis(in_model_path, 1, period)
+    for amplitude in range(10, 61, 10):
+        wave_an_obj_z_axis(in_model_path, amplitude, period)
+        print('waved with amplitude', amplitude, 'and period', period)
+
+if len(sys.argv) >= 4:
+    wave_an_obj_z_axis(sys.argv[1], float(sys.argv[2]), float(sys.argv[3]))
+else:
     print("Please specify the input obj file, wave amplitude and period")
+    generate_waved()
     exit(1)
-
-INPUT = sys.argv[1]
-amplitude = float(sys.argv[2])
-period = float(sys.argv[3])
-
-OUTPUT = INPUT.replace('.', '_waved_a_' + sys.argv[2] + '_t_' + sys.argv[3] + '.')
-
-f = open(INPUT, 'r')
-di = f.read()
-f.close()
-vs = vertexes(di)
-ts = triangles(di)
-
-new_vs = []
-for v in vs:
-    x = v[0]
-    y = v[1]
-    z = v[2]
-    skew = amplitude * math.sin(z/period)
-    new_x = x + skew
-    new_y = y
-    new_z = z
-    new_vs += [[new_x, new_y, new_z]]
-
-f = open(OUTPUT, 'w')
-f.write(str_from_vertexes(new_vs) + str_from_faces(ts))
-f.close()
