@@ -28,13 +28,19 @@ def triangles(text):
 def triangle_normals(text):
 	return _list_by_prefix('f ', text, lambda s: int(s.split('/')[2]))
 
+def triangle_point(vertexes, triangle_indx):
+	return [
+		vertexes[triangle_indx - 1][0], # X
+		vertexes[triangle_indx - 1][1], # Y
+		vertexes[triangle_indx - 1][2], # Z
+	]
+
 # output
 def str_from_vertexes(vertexes):
 	return _str_by_prefix('v ', vertexes)
 
 def str_from_faces(faces):
 	return _str_by_prefix('f ', faces)
-
 
 if __name__ == "__main__":
 	f = open('ellipsoid.obj', 'r')

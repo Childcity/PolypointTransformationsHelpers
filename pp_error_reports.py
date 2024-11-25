@@ -56,26 +56,27 @@ def generate_deformed_report(subdir, script_deformed_basename, rbf_deformed_base
 	print(f"Excel report generated: {excel_filepath}")
 
 
-root_dir = 'obj/results/'
+if __name__ == "__main__":
+	root_dir = 'obj/results/'
 
-generate_deformed_report(
-	subdir = os.path.join(root_dir, 'waved/'),
-	script_deformed_basename='bunny_1_waved',
-	rbf_deformed_basename='result_rbf_deformed_1_waved',
-	pp_deformed_basename='result_pp_deformed_1_waved',
-	excel_filename='wave_deformation_report_2.xlsx'
-)
-generate_deformed_report(
-	subdir = os.path.join(root_dir, 'screwed/'),
-	script_deformed_basename='bunny_1_screwed',
-	rbf_deformed_basename='result_rbf_deformed_1_screwed',
-	pp_deformed_basename='result_pp_deformed_1_screwed',
-	excel_filename='screw_deformation_report_2.xlsx'
-)
-generate_deformed_report(
-	subdir = os.path.join(root_dir, 'squared/'),
-	script_deformed_basename='bunny_1_squared',
-	rbf_deformed_basename='result_rbf_deformed_1_squared',
-	pp_deformed_basename='result_pp_deformed_1_squared',
-	excel_filename='squared_deformation_report_2.xlsx'
-)
+	generate_deformed_report(
+		subdir = os.path.join(root_dir, 'waved/'),
+		script_deformed_basename='bunny_1_waved',
+		rbf_deformed_basename='result_rbf_deformed_1_waved',
+		pp_deformed_basename='result_pp_deformed_1_waved',
+		excel_filename='wave_deformation_report_2.xlsx'
+	)
+	generate_deformed_report(
+		subdir = os.path.join(root_dir, 'screwed/'),
+		script_deformed_basename='bunny_1_screwed',
+		rbf_deformed_basename='result_rbf_deformed_1_screwed',
+		pp_deformed_basename='result_pp_deformed_1_screwed',
+		excel_filename='screw_deformation_report_2.xlsx'
+	)
+	generate_deformed_report(
+		subdir = os.path.join(root_dir, 'squared/'),
+		script_deformed_basename='bunny_1_squared',
+		rbf_deformed_basename='result_rbf_deformed_1_squared',
+		pp_deformed_basename='result_pp_deformed_1_squared',
+		excel_filename='squared_deformation_report_2.xlsx'
+	)

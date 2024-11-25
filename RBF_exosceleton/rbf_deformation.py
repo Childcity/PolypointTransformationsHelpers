@@ -105,4 +105,5 @@ def generate_rbf_deformed():
         export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO)
         print('exported rbf deformed with division', div, 'DEFORMATION_BASIS_TO:', DEFORMATION_BASIS_TO)
 
-generate_rbf_deformed()
+if __name__ == "__main__":
+    generate_rbf_deformed()
