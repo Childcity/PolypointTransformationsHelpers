@@ -97,7 +97,7 @@ def export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_B
 def generate_rbf_deformed():
     DEFORMATION_INPUT = './obj/bunny/bunny_1.obj'
     DEFORMATION_BASIS_FROM = './obj/bunny/bunny_decimated_1.obj'
-    DEFORMATION_BASIS_TO_FIRST = './obj/bunny/bunny_decimated_1_screwed_div_1.obj'
+    DEFORMATION_BASIS_TO_FIRST = './obj/bunny/bunny_decimated_1_squared_by_z_div_1.obj'
 
     export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO_FIRST)
     for div in range(10, 61, 10):

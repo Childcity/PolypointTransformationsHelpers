@@ -13,7 +13,7 @@ def mean_squared_error(vertices1, vertices2):
 	vertices2 = np.array(vertices2)
 	return np.square(np.subtract(vertices1, vertices2)).mean()
 
-def generate_deformed_report(subdir, excel_filename, script_deformed_basename, rbf_deformed_basename, pp_deformed_basename):
+def generate_deformed_report(subdir, script_deformed_basename, rbf_deformed_basename, pp_deformed_basename, excel_filename):
 
 	all_script_deformed = list_files(subdir, script_deformed_basename, 'obj')
 	all_rbf_deformed = list_files(subdir, rbf_deformed_basename, 'obj')
@@ -71,4 +71,11 @@ generate_deformed_report(
 	rbf_deformed_basename='result_rbf_deformed_1_screwed',
 	pp_deformed_basename='result_pp_deformed_1_screwed',
 	excel_filename='screw_deformation_report_2.xlsx'
+)
+generate_deformed_report(
+	subdir = os.path.join(root_dir, 'squared/'),
+	script_deformed_basename='bunny_1_squared',
+	rbf_deformed_basename='result_rbf_deformed_1_squared',
+	pp_deformed_basename='result_pp_deformed_1_squared',
+	excel_filename='squared_deformation_report_2.xlsx'
 )
