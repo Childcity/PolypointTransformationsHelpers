@@ -237,6 +237,7 @@ def export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BA
 	dbt_ts = triangles(dbt)
 
 	print('low-polygonal models:\n\tdeformation basis from has', len(dbf_ts), 'triangles and \n\tdeformation basis to has', len(dbt_ts), 'triangles.\n')
+	assert(len(dbf_ts) == len(dbt_ts))
 
 	in_planes, in_planes_for_vertex_dict = build_planes(di_vs, di_ts)
 
@@ -263,3 +264,10 @@ def generate_pp_deformed():
 
 if __name__ == "__main__":
 	generate_pp_deformed()
+ 
+    # DEFORMATION_INPUT = './obj/bunny/bunny_1.obj'
+    # DEFORMATION_BASIS_FROM = './obj/bunny/bunny_decimated_2.obj'
+    # DEFORMATION_BASIS_TO_FIRST = './obj/bunny/bunny_decimated_2_screwed_div_50.obj'
+
+    # export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO_FIRST)
+
