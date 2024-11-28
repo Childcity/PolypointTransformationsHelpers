@@ -89,6 +89,8 @@ def build_planes(vertexes: list, triangles: list) -> (list[Plane], dict[Vertex, 
 		Vertex(*v_arr): set() for v_arr in vertexes # Initialize with empty sets, to preserve order of 'vertexes'
 	}
 
+	# NOTE: planes_for_vertex_dict stores each vertex as list of connected planes 
+
 	def append_vertex_as_planes(point: list, plane: Plane):
 		vertex_key = Vertex(*point)
 		assert vertex_key in planes_for_vertex_dict
@@ -120,31 +122,31 @@ def get_polypoint_plane(plane: Plane, orig_basises: list, res_basises: list):
 		x = res_basis_p[0]
 		y = res_basis_p[1]
 		z = res_basis_p[2]
-		h = 1 # ???
+		# h = 1
 
 		a1 += x * x
 		b1 += x * y
 		c1 += x * z
-		d1 += x * h
+		d1 += x			# * h
 		r1 += x * γ
 
-		a2 += y * x
+		# a2 += y * x 	# a2 == b1
 		b2 += y * y
 		c2 += y * z
-		d2 += y * h
+		d2 += y 		# * h
 		r2 += y * γ
 
-		a3 += z * x
-		b3 += z * y
+		# a3 += z * x 	# a3 == c1
+		# b3 += z * y 	# b3 == c2
 		c3 += z * z
-		d3 += z * h
+		d3 += z 		# * h
 		r3 += z * γ
 
-		a4 += h * x
-		b4 += h * y
-		c4 += h * z
-		d4 += h * h
-		r4 += h * γ
+		# a4 += h * x 	# a4 == d1
+		# b4 += h * y 	# b4 == d2
+		# c4 += h * z 	# c4 == d3
+		d4 += 1 		# * h * h
+		r4 += γ			# * h 
 
 	# Add a small regularization term to the diagonal elements of A
 	A = np.array([
@@ -215,8 +217,9 @@ def get_transformed_vertexes(planes_for_vertex_dict: dict[Vertex, set[Plane]], t
 	return result_vertexes
 
 
-def export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO):
-	DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.split('/')[-1].replace('bunny_decimated', 'result_pp_deformed')
+def export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT = None):
+	if (DEFORMED_OUTPUT == None):
+		DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.split('/')[-1].replace('bunny_decimated', 'result_pp_deformed')
 
 	f = open(DEFORMATION_INPUT, 'r')
 	di = f.read()
@@ -243,24 +246,37 @@ def export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BA
 
 	# Get transformed planes
 	start_time = time.time()
-	tr_planes = get_polypoint_planes_list(in_planes, dbf_vs, dbt_vs)
+	tr_planes = get_polypoint_planes_list(in_planes, orig_basises=dbf_vs, res_basises=dbt_vs)
 	tr_vertexes  = get_transformed_vertexes(in_planes_for_vertex_dict, tr_planes)
 	print(f"Transformation took: {time.time() - start_time} seconds")
 
 	with open(DEFORMED_OUTPUT, 'w+') as f:
+		print('exported pp deformed to', DEFORMED_OUTPUT)
 		f.write(str_from_vertexes(tr_vertexes) + str_from_faces(di_ts))
-
 
 def generate_pp_deformed():
     DEFORMATION_INPUT = './obj/bunny/bunny_1.obj'
     DEFORMATION_BASIS_FROM = './obj/bunny/bunny_decimated_1.obj'
-    DEFORMATION_BASIS_TO_FIRST = './obj/bunny/bunny_decimated_1_squared_by_z_div_1.obj'
+    DEFORMATION_BASIS_TO_FIRST = './obj/bunny/bunny_decimated_1_screwed_div_1.obj'
 
     export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO_FIRST)
     for div in range(10, 61, 10):
         DEFORMATION_BASIS_TO = DEFORMATION_BASIS_TO_FIRST.replace('div_1', f'div_{div}')
         export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO)
         print('exported pp deformed with division', div, 'DEFORMATION_BASIS_TO:', DEFORMATION_BASIS_TO)
+
+# def generate_pp_deformed():
+#     DEFORMATION_INPUT_FIRST = './obj/bunny/bunny_1.obj'
+#     DEFORMATION_BASIS_FROM = './obj/bunny/bunny_decimated_1.obj'
+#     DEFORMATION_BASIS_TO = './obj/bunny/bunny_decimated_1_screwed_div_30.obj'
+
+#     #export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO_FIRST)
+#     for div in range(10, 10, 10):
+#         DEFORMATION_INPUT = DEFORMATION_INPUT_FIRST.replace('bunny_1', f'bunny_decimated_{div}')
+#         DEFORMED_OUTPUT = DEFORMATION_INPUT.split('/')[-1].replace('bunny', f'result_pp_deformed_1_screwed_div_30_bunny_decimated_{div}%')
+#         export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT)
+#         print('exported pp deformed with division', div, 'DEFORMATION_BASIS_TO:', DEFORMATION_BASIS_TO)
+
 
 if __name__ == "__main__":
 	generate_pp_deformed()
