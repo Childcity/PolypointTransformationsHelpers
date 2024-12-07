@@ -22,6 +22,6 @@ def decimate(reduce_factor = 50): # %
     ms.save_current_mesh(f"bunny_decimated_{reduce_factor}.obj")
 
 if __name__ == "__main__":
-	for i in range(10, 100, 10):
+	for i in {0.01, 0.21, 0.41, 0.61, 0.81, 1.01, 1.21}:
 		decimate(i)
 		print('decimated with', i, '%')

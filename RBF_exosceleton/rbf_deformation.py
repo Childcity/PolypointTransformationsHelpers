@@ -19,7 +19,10 @@ import time
 # DEFORMATION_BASIS_TO = './obj/bunny/bunny_decimated_0_screwed_div_50.obj'
 # DEFORMATION_BASIS_TO = './obj/bunny/bunny_decimated_0_waved_a_10_t_10.obj'
 
-def export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO):
+def export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT = None):
+    if (DEFORMED_OUTPUT == None):
+        DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.split('/')[-1].replace('bunny_decimated', 'result_rbf_deformed')
+
     f = open(DEFORMATION_INPUT, 'r')
     di = f.read()
     f.close()
@@ -90,7 +93,7 @@ def export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_B
 
     print(f"Transformation took: {time.time() - start_time} seconds")
 
-    f = open(DEFORMATION_BASIS_TO.split('/')[-1].replace('bunny_decimated', 'result_rbf_deformed'), 'w+')
+    f = open(DEFORMED_OUTPUT, 'w+')
     f.write(str_from_vertexes(deformed_vertices) + str_from_faces(di_ts))
     f.close()
 
@@ -106,4 +109,10 @@ def generate_rbf_deformed():
         print('exported rbf deformed with division', div, 'DEFORMATION_BASIS_TO:', DEFORMATION_BASIS_TO)
 
 if __name__ == "__main__":
-    generate_rbf_deformed()
+    # generate_rbf_deformed()
+    DEFORMATION_INPUT = './obj/bunny/bunny_1.obj'
+    DEFORMATION_BASIS_FROM = './obj/tetr/tetr_13v.obj'
+    DEFORMATION_BASIS_TO = './obj/tetr/tetr_deformed_13v_1.obj'
+    DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.replace('tetr_deformed', 'result_rbf_deformed')
+
+    export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT)

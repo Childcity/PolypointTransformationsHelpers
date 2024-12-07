@@ -279,11 +279,12 @@ def generate_pp_deformed():
 
 
 if __name__ == "__main__":
-	generate_pp_deformed()
+	# generate_pp_deformed()
  
-    # DEFORMATION_INPUT = './obj/bunny/bunny_1.obj'
-    # DEFORMATION_BASIS_FROM = './obj/bunny/bunny_decimated_2.obj'
-    # DEFORMATION_BASIS_TO_FIRST = './obj/bunny/bunny_decimated_2_screwed_div_50.obj'
+    DEFORMATION_INPUT = './obj/bunny/bunny_1.obj'
+    DEFORMATION_BASIS_FROM = './obj/tetr/tetr_13v.obj'
+    DEFORMATION_BASIS_TO = './obj/tetr/tetr_deformed_13v_1.obj'
+    DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.replace('tetr_deformed', 'result_pp_deformed')
 
-    # export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO_FIRST)
+    export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT)
 
