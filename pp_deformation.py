@@ -123,30 +123,32 @@ def get_polypoint_plane(plane: Plane, orig_basises: list, res_basises: list):
 		y = res_basis_p[1]
 		z = res_basis_p[2]
 		# h = 1
+		γSquered = γ ** 2
 
-		a1 += x * x
-		b1 += x * y
-		c1 += x * z
-		d1 += x			# * h
-		r1 += x * γ
+		a1 += x * x / γSquered
+		b1 += x * y / γSquered
+		c1 += x * z / γSquered
+		d1 += x 	/ γSquered		# * h
 
-		# a2 += y * x 	# a2 == b1
-		b2 += y * y
-		c2 += y * z
-		d2 += y 		# * h
-		r2 += y * γ
+		# a2 += y * x / γSquered	# a2 == b1
+		b2 += y * y	/ γSquered
+		c2 += y * z	/ γSquered
+		d2 += y 	/ γSquered		# * h
 
-		# a3 += z * x 	# a3 == c1
-		# b3 += z * y 	# b3 == c2
-		c3 += z * z
-		d3 += z 		# * h
-		r3 += z * γ
+		#a3 += z * x * γSquered		# a3 == c1
+		#b3 += z * y * γSquered		# b3 == c2
+		c3 += z * z	/ γSquered
+		d3 += z 	/ γSquered		# * h
 
-		# a4 += h * x 	# a4 == d1
-		# b4 += h * y 	# b4 == d2
-		# c4 += h * z 	# c4 == d3
-		d4 += 1 		# * h * h
-		r4 += γ			# * h 
+		#a4 += x / γSquered		# a4 == d1
+		#b4 += y / γSquered		# b4 == d2
+		#c4 += z / γSquered		# c4 == d3
+		d4 += 1 / γSquered 		# * h * h
+  
+		r1 += x / γ
+		r2 += y / γ
+		r3 += z / γ
+		r4 += 1 / γ
 
 	# Add a small regularization term to the diagonal elements of A
 	A = np.array([
@@ -282,9 +284,10 @@ if __name__ == "__main__":
 	# generate_pp_deformed()
  
     DEFORMATION_INPUT = './obj/bunny/bunny_1.obj'
-    DEFORMATION_BASIS_FROM = './obj/tetr/tetr_13v.obj'
-    DEFORMATION_BASIS_TO = './obj/tetr/tetr_deformed_13v_1.obj'
-    DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.replace('tetr_deformed', 'result_pp_deformed')
+    DEFORMATION_BASIS_FROM = './obj/tetr/tetr_4t.obj'
+    DEFORMATION_BASIS_TO = './obj/tetr/tetr_deformed_4v_1_scaled_rotated_moved.obj'
+    #DEFORMATION_BASIS_TO = './obj/tetr/tetr_deformed_13v_2.obj'
+    DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.replace('tetr_', 'test_result_pp_deformed_')
 
     export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT)
 
