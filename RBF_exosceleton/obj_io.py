@@ -22,9 +22,11 @@ def normals(text):
 	return _list_by_prefix('vn ', text)
 
 #f 1/x/x 2/x/x 3/x/x
+# Returns list, each element is a list of 3 indices of vertices
 def triangles(text):
 	return _list_by_prefix('f ', text, lambda s: int(s.split('/')[0]))
 
+#f x/x/1 x/x/2 x/x/3
 def triangle_normals(text):
 	return _list_by_prefix('f ', text, lambda s: int(s.split('/')[2]))
 
