@@ -50,10 +50,10 @@ class Plane:
 		self.D = -(self.A * p1[0] + self.B * p1[1] + self.C * p1[2])
 
 	def __repr__(self):
-		return f"Plane(id={id}; A={self.A}; B={self.B}; C={self.C}; D={self.D})"
+		return f"Plane(id={self.id}; A={self.A}; B={self.B}; C={self.C}; D={self.D})"
 
 	def __str__(self):
-		return f"Plane(id={id}; A={self.A}; B={self.B}; C={self.C}; D={self.D})"
+		return f"Plane(id={self.id}; A={self.A}; B={self.B}; C={self.C}; D={self.D})"
 
 	def get_surface_for_z(self, X, Y): # X, Y: 2D arrays (2D grid)
 		return (-self.A * X - self.B * Y - self.D) / self.C
