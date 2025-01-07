@@ -98,21 +98,23 @@ def export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_B
     f.close()
 
 def generate_rbf_deformed():
-    DEFORMATION_INPUT = './obj/bunny/bunny_1.obj'
-    DEFORMATION_BASIS_FROM = './obj/bunny/bunny_decimated_1.obj'
-    DEFORMATION_BASIS_TO_FIRST = './obj/bunny/bunny_decimated_1_squared_by_z_div_1.obj'
+    DEFORMATION_INPUT = 			'./obj/tetr/sphere_transform/icosphere.obj'
+    DEFORMATION_BASIS_FROM = 		'./obj/tetr/tetr_13v.obj'
+    DEFORMATION_BASIS_TO_FIRST = 	'./obj/tetr/tetr_13v_screwed_div_1.obj'
+    DEFORMED_OUTPUT = 				'./obj/tetr/sphere_transform/screwed/rbf_tetr_13v_screwed_div_1.obj'
 
-    export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO_FIRST)
+    export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO_FIRST, DEFORMED_OUTPUT)
     for div in range(10, 61, 10):
         DEFORMATION_BASIS_TO = DEFORMATION_BASIS_TO_FIRST.replace('div_1', f'div_{div}')
-        export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO)
+        DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.replace('tetr_', 'sphere_transform/screwed/rbf_tetr_')
+        export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT)
         print('exported rbf deformed with division', div, 'DEFORMATION_BASIS_TO:', DEFORMATION_BASIS_TO)
 
 if __name__ == "__main__":
-    # generate_rbf_deformed()
-    DEFORMATION_INPUT = './obj/bunny/bunny_1.obj'
-    DEFORMATION_BASIS_FROM = './obj/tetr/tetr_13v.obj'
-    DEFORMATION_BASIS_TO = './obj/tetr/tetr_deformed_13v_1.obj'
-    DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.replace('tetr_deformed', 'result_rbf_deformed')
+    generate_rbf_deformed()
+    # DEFORMATION_INPUT = './obj/bunny/bunny_1.obj'
+    # DEFORMATION_BASIS_FROM = './obj/tetr/tetr_13v.obj'
+    # DEFORMATION_BASIS_TO = './obj/tetr/tetr_deformed_13v_1.obj'
+    # DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.replace('tetr_deformed', 'result_rbf_deformed')
 
-    export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT)
+    # export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT)
