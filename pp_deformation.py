@@ -39,12 +39,6 @@ class Plane:
 
 		# Get plane coefficients
 		self.A, self.B, self.C = normal_vector
-		# if self.A == 0.0:
-		# 	self.A = reg_term
-		# if self.B == 0.0:
-		# 	self.B = reg_term
-		# if self.C == 0.0:
-		# 	self.C = reg_term
 
 		# Calculate the value of D for the plane equation ax + by + cz + d = 0
 		self.D = -(self.A * p1[0] + self.B * p1[1] + self.C * p1[2])
@@ -81,11 +75,13 @@ class Plane:
 
 
 Vertex = collections.namedtuple('Vertex', ['x', 'y', 'z'])
+PlaneSet = set[Plane]
+PlanesForVertex = dict[Vertex, PlaneSet]
 
 
-def build_planes(vertexes: list, triangles: list) -> (list[Plane], dict[Vertex, set[Plane]]):
+def build_planes_intersect_topology(vertexes: list, triangles: list) -> tuple[list[Plane], PlanesForVertex]:
 	planes: list[Plane] = []
-	planes_for_vertex_dict: dict[Vertex, set[Plane]] = {
+	planes_for_vertex_dict: PlanesForVertex = {
 		Vertex(*v_arr): set() for v_arr in vertexes # Initialize with empty sets, to preserve order of 'vertexes'
 	}
 
@@ -175,8 +171,8 @@ def get_polypoint_planes_list(in_planes: list[Plane], orig_basises: list, res_ba
 	return result_planes
 
 
-def closest_point_to_planes_min(planes: list[Plane]) -> np.array:
-	def objective_function(point: list, planes: list[Plane]):
+def closest_point_to_planes_min(planes: PlaneSet) -> np.array:
+	def objective_function(point: list, planes: PlaneSet):
 		# The sum of squared distances to the planes
 		return sum(plane.distance(point) for plane in planes)
 
@@ -187,14 +183,14 @@ def closest_point_to_planes_min(planes: list[Plane]) -> np.array:
 	return min_result.x # closest_point
 
 
-def closest_point_to_planes_lstsq(planes: list[Plane]):
+def closest_point_to_planes_lstsq(planes: PlaneSet):
 	A = np.array([[plane.A, plane.B, plane.C] for plane in planes])
 	B = np.array([-plane.D for plane in planes])
 	X = np.linalg.lstsq(A, B, rcond=None)[0]
 	return X
 
 
-def closest_point_to_planes_pinv(planes: list[Plane]):
+def closest_point_to_planes_pinv(planes: PlaneSet):
 	A = np.array([[plane.A, plane.B, plane.C] for plane in planes])
 	# A += np.eye(A.shape[0], A.shape[1]) * reg_term
 	B = np.array([-plane.D for plane in planes])
@@ -204,11 +200,11 @@ def closest_point_to_planes_pinv(planes: list[Plane]):
 	return A_pinv.dot(B)
 
 
-def get_transformed_vertexes(planes_for_vertex_dict: dict[Vertex, set[Plane]], tr_planes: list[Plane]) -> list[np.array]:
+def get_transformed_vertexes_intersect_topology(planes_for_vertex_dict: PlanesForVertex, tr_planes: list[Plane]) -> list[np.array]:
 	# Get transformed vertexes by finding closest points to transformed planes
 	result_vertexes : list[np.array] = []
 	for planes_for_vertex_set in planes_for_vertex_dict.values():
-		tr_planes_for_vertex_set: set[Plane] = set()
+		tr_planes_for_vertex_set: PlaneSet = set()
 
 		# Find all transformed planes (by Plane.id) that will later represent transformed vertex
 		for plane_for_vertex in planes_for_vertex_set:
@@ -244,17 +240,18 @@ def export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BA
 	print('low-polygonal models:\n\tdeformation basis from has', len(dbf_ts), 'triangles and \n\tdeformation basis to has', len(dbt_ts), 'triangles.\n')
 	assert(len(dbf_ts) == len(dbt_ts))
 
-	in_planes, in_planes_for_vertex_dict = build_planes(di_vs, di_ts)
+	in_planes, in_planes_for_vertex_dict = build_planes_intersect_topology(di_vs, di_ts)
 
 	# Get transformed planes
 	start_time = time.time()
 	tr_planes = get_polypoint_planes_list(in_planes, orig_basises=dbf_vs, res_basises=dbt_vs)
-	tr_vertexes  = get_transformed_vertexes(in_planes_for_vertex_dict, tr_planes)
+	tr_vertexes  = get_transformed_vertexes_intersect_topology(in_planes_for_vertex_dict, tr_planes)
 	print(f"Transformation took: {time.time() - start_time} seconds")
 
 	with open(DEFORMED_OUTPUT, 'w+') as f:
 		print('exported pp deformed to', DEFORMED_OUTPUT)
 		f.write(str_from_vertexes(tr_vertexes) + str_from_faces(di_ts))
+
 
 def generate_pp_deformed():
     DEFORMATION_INPUT = 			'./obj/tetr/sphere_transform/icosphere.obj'

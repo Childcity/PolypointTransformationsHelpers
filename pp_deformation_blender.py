@@ -74,12 +74,12 @@ def deform_mesh(input_name, deformation_basis_from_name, deformation_basis_to_na
 	# print("Input Triangles:", input_faces)
 
 	# Build planes from faces
-	in_planes, in_planes_for_vertex_dict = build_planes(input_vertices, input_faces)
+	in_planes, in_planes_for_vertex_dict = build_planes_intersect_topology(input_vertices, input_faces)
 
 	# Get transformed planes
 	start_time = time.time()
 	tr_planes = get_polypoint_planes_list(in_planes, orig_basises=basis_from_vertices, res_basises=basis_to_vertices)
-	tr_vertexes  = get_transformed_vertexes(in_planes_for_vertex_dict, tr_planes)
+	tr_vertexes  = get_transformed_vertexes_intersect_topology(in_planes_for_vertex_dict, tr_planes)
 	print(f"Transformation took: {time.time() - start_time} seconds")
 
 	# Apply deformation to output object
