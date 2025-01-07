@@ -9,8 +9,11 @@ def _list_by_prefix(prefix, text, to_type = lambda x: float(x) ):
 
 def _str_by_prefix(prefix, elements):
 	st = ""
-	for (a, b, c) in elements:
-		st += prefix + str(a) + ' ' + str(b) + ' ' + str(c) + '\n'
+	for line_el in elements:
+		st += prefix
+		for el in line_el:
+			st += ' ' + str(el)
+		st += '\n'
 	return st
 
 
