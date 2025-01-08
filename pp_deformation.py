@@ -43,6 +43,13 @@ class Plane:
 		# Calculate the value of D for the plane equation ax + by + cz + d = 0
 		self.D = -(self.A * p1[0] + self.B * p1[1] + self.C * p1[2])
 
+	def orthogonal_plane(self, point, other_vector, id = None):
+		this_plane_normal_vector = np.array([self.A, self.B, self.C])
+		other_plane_normal_vector = np.cross(this_plane_normal_vector, other_vector)
+		a, b, c = other_plane_normal_vector
+		d = -(a * point[0] + b * point[1] + c * point[2])
+		return Plane.from_abcd(id, a, b, c, d)
+
 	def __repr__(self):
 		return f"Plane(id={self.id}; A={self.A}; B={self.B}; C={self.C}; D={self.D})"
 
@@ -77,6 +84,9 @@ class Plane:
 Vertex = collections.namedtuple('Vertex', ['x', 'y', 'z'])
 PlaneSet = set[Plane]
 PlanesForVertex = dict[Vertex, PlaneSet]
+TriPlane = tuple[Plane, Plane, Plane]
+TriPlaneSet = set[TriPlane]
+TriPlanesForVertex = dict[Vertex, TriPlaneSet]
 
 
 def build_planes_intersect_topology(vertexes: list, triangles: list) -> tuple[list[Plane], PlanesForVertex]:
@@ -102,6 +112,47 @@ def build_planes_intersect_topology(vertexes: list, triangles: list) -> tuple[li
 		append_vertex_as_planes(p1, plane)
 		append_vertex_as_planes(p2, plane)
 		append_vertex_as_planes(p3, plane)
+	return planes, planes_for_vertex_dict
+
+
+def build_planes_sidor_topology(vertexes: list, triangles: list) -> tuple[list[Plane], PlanesForVertex]:
+	planes: list[Plane] = []
+	planes_for_vertex_dict: TriPlanesForVertex = {
+		Vertex(*v_arr): set() for v_arr in vertexes # Initialize with empty sets, to preserve order of 'vertexes'
+	}
+
+	# NOTE: planes_for_vertex_dict stores each vertex as list of connected planes 
+
+	def append_vertex_as_tri_plane(point: list, tri_plane: TriPlane):
+		vertex_key = Vertex(*point)
+		assert vertex_key in planes_for_vertex_dict
+		planes_for_vertex_dict[vertex_key].add(tri_plane)
+
+	# Generate planes for each triangle
+	plane_id = -1
+	for tri in triangles:
+		p1 = triangle_point(vertexes, tri[0])
+		p2 = triangle_point(vertexes, tri[1])
+		p3 = triangle_point(vertexes, tri[2])
+
+		triangle_plane = Plane(plane_id + 1, p1, p2, p3).normalized()
+		p1p2_plane = triangle_plane.orthogonal_plane(p1, p2 - p1, plane_id + 2).normalized()
+		p2p3_plane = triangle_plane.orthogonal_plane(p2, p3 - p2, plane_id + 3).normalized()
+		p3p1_plane = triangle_plane.orthogonal_plane(p3, p1 - p3, plane_id + 4).normalized()
+
+		planes.append(triangle_plane)	# inserted at plane_id + 1
+		planes.append(p1p2_plane)		# inserted at plane_id + 2
+		planes.append(p2p3_plane)		# inserted at plane_id + 3
+		planes.append(p3p1_plane)		# inserted at plane_id + 4
+
+		# In Sidor diser 1 vertex represented as 3 planes (TriPlane)
+		append_vertex_as_tri_plane(p1, (triangle_plane, p1p2_plane, p3p1_plane))
+		append_vertex_as_tri_plane(p2, (triangle_plane, p1p2_plane, p2p3_plane))
+		append_vertex_as_tri_plane(p3, (triangle_plane, p2p3_plane, p3p1_plane))
+
+		plane_id += 4
+
+	assert plane_id == len(planes) - 1
 	return planes, planes_for_vertex_dict
 
 
@@ -215,27 +266,35 @@ def get_transformed_vertexes_intersect_topology(planes_for_vertex_dict: PlanesFo
 	return result_vertexes
 
 
+def get_transformed_vertexes_sidor_topology(planes_for_vertex_dict: dict[Vertex, TriPlaneSet], tr_planes: list[Plane]) -> list[np.array]:
+	# Get transformed vertexes by finding closest points to transformed planes
+	result_vertexes : list[np.array] = []
+	for tri_plane_for_vertex_set in planes_for_vertex_dict.values():
+		tr_sub_vertexes: list[np.array] = list()
+
+		# Find all transformed planes (by Plane.id) that will later represent transformed sub vertex
+		for tri_plane_for_vertex in tri_plane_for_vertex_set:
+			tr_tri_plane_for_vertex_set = set(
+				tr_planes[plane.id] for plane in tri_plane_for_vertex
+			)
+			tr_sub_vertex = closest_point_to_planes_pinv(tr_tri_plane_for_vertex_set) # planes_intersection
+			tr_sub_vertexes.append(tr_sub_vertex)
+
+		# Find mean vertex from list of vertexes
+		tr_mean_vertex = np.mean(tr_sub_vertexes, axis=0)
+		result_vertexes.append(tr_mean_vertex)
+
+	assert len(result_vertexes) == len(planes_for_vertex_dict)
+	return result_vertexes
+
+
 def export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT = None):
 	if (DEFORMED_OUTPUT == None):
 		DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.split('/')[-1].replace('bunny_decimated', 'result_pp_deformed')
 
-	f = open(DEFORMATION_INPUT, 'r')
-	di = f.read()
-	f.close()
-	di_vs = vertexes(di)
-	di_ts = triangles(di)
-
-	f = open(DEFORMATION_BASIS_FROM, 'r')
-	dbf = f.read()
-	f.close()
-	dbf_vs = vertexes(dbf)
-	dbf_ts = triangles(dbf)
-
-	f = open(DEFORMATION_BASIS_TO, 'r')
-	dbt = f.read()
-	f.close()
-	dbt_vs = vertexes(dbt)
-	dbt_ts = triangles(dbt)
+	di_vs, di_ts = parse_obj_file(DEFORMATION_INPUT)
+	dbf_vs, dbf_ts = parse_obj_file(DEFORMATION_BASIS_FROM)
+	dbt_vs, dbt_ts = parse_obj_file(DEFORMATION_BASIS_TO)
 
 	print('low-polygonal models:\n\tdeformation basis from has', len(dbf_ts), 'triangles and \n\tdeformation basis to has', len(dbt_ts), 'triangles.\n')
 	assert(len(dbf_ts) == len(dbt_ts))

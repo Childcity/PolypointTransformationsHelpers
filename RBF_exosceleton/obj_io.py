@@ -40,6 +40,12 @@ def triangle_point(vertexes, triangle_indx):
 		vertexes[triangle_indx - 1][2], # Z
 	]
 
+def parse_obj_file(file_path: str) -> tuple[list[float], list[float]]:
+	with open(file_path, 'r') as f:
+		obj = f.read()
+		return vertexes(obj), triangles(obj)
+	assert False
+
 # output
 def str_from_vertexes(vertexes):
 	return _str_by_prefix('v ', vertexes)
