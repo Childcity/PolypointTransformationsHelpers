@@ -4,6 +4,7 @@ import math
 import time
 import collections
 from scipy.optimize import minimize
+from enum import Enum
 
 reg_term = 1e-16
 
@@ -87,7 +88,7 @@ PlanesForVertex = dict[Vertex, PlaneSet]
 TriPlane = tuple[Plane, Plane, Plane]
 TriPlaneSet = set[TriPlane]
 TriPlanesForVertex = dict[Vertex, TriPlaneSet]
-
+Topology = Enum(value='Topology', names=('Intersect Sidor'))
 
 def build_planes_intersect_topology(vertexes: list, triangles: list) -> tuple[list[Plane], PlanesForVertex]:
 	planes: list[Plane] = []
@@ -115,7 +116,7 @@ def build_planes_intersect_topology(vertexes: list, triangles: list) -> tuple[li
 	return planes, planes_for_vertex_dict
 
 
-def build_planes_sidor_topology(vertexes: list, triangles: list) -> tuple[list[Plane], PlanesForVertex]:
+def build_planes_sidor_topology(vertexes: list, triangles: list) -> tuple[list[Plane], TriPlanesForVertex]:
 	planes: list[Plane] = []
 	planes_for_vertex_dict: TriPlanesForVertex = {
 		Vertex(*v_arr): set() for v_arr in vertexes # Initialize with empty sets, to preserve order of 'vertexes'
@@ -131,9 +132,9 @@ def build_planes_sidor_topology(vertexes: list, triangles: list) -> tuple[list[P
 	# Generate planes for each triangle
 	plane_id = -1
 	for tri in triangles:
-		p1 = triangle_point(vertexes, tri[0])
-		p2 = triangle_point(vertexes, tri[1])
-		p3 = triangle_point(vertexes, tri[2])
+		p1 = np.array(triangle_point(vertexes, tri[0]))
+		p2 = np.array(triangle_point(vertexes, tri[1]))
+		p3 = np.array(triangle_point(vertexes, tri[2]))
 
 		triangle_plane = Plane(plane_id + 1, p1, p2, p3).normalized()
 		p1p2_plane = triangle_plane.orthogonal_plane(p1, p2 - p1, plane_id + 2).normalized()
@@ -154,6 +155,15 @@ def build_planes_sidor_topology(vertexes: list, triangles: list) -> tuple[list[P
 
 	assert plane_id == len(planes) - 1
 	return planes, planes_for_vertex_dict
+
+
+def build_planes(vertexes: list, triangles: list, topology: Topology) -> tuple[list[Plane], PlanesForVertex] | tuple[list[Plane], TriPlanesForVertex]:
+	match topology:
+		case Topology.Intersect:
+			return build_planes_intersect_topology(vertexes, triangles)
+		case Topology.Sidor:
+			return build_planes_sidor_topology(vertexes, triangles)
+	assert False
 
 
 def get_polypoint_plane(plane: Plane, orig_basises: list, res_basises: list):
@@ -266,7 +276,7 @@ def get_transformed_vertexes_intersect_topology(planes_for_vertex_dict: PlanesFo
 	return result_vertexes
 
 
-def get_transformed_vertexes_sidor_topology(planes_for_vertex_dict: dict[Vertex, TriPlaneSet], tr_planes: list[Plane]) -> list[np.array]:
+def get_transformed_vertexes_sidor_topology(planes_for_vertex_dict: TriPlanesForVertex, tr_planes: list[Plane]) -> list[np.array]:
 	# Get transformed vertexes by finding closest points to transformed planes
 	result_vertexes : list[np.array] = []
 	for tri_plane_for_vertex_set in planes_for_vertex_dict.values():
@@ -288,10 +298,16 @@ def get_transformed_vertexes_sidor_topology(planes_for_vertex_dict: dict[Vertex,
 	return result_vertexes
 
 
-def export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT = None):
-	if (DEFORMED_OUTPUT == None):
-		DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.split('/')[-1].replace('bunny_decimated', 'result_pp_deformed')
+def get_transformed_vertexes(planes_for_vertex_dict: PlanesForVertex | TriPlanesForVertex, tr_planes: list[Plane], topology: Topology) -> list[np.array]:
+	match topology:
+		case Topology.Intersect:
+			return get_transformed_vertexes_intersect_topology(planes_for_vertex_dict, tr_planes)
+		case Topology.Sidor:
+			return get_transformed_vertexes_sidor_topology(planes_for_vertex_dict, tr_planes)
+	assert False
 
+
+def export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT, topology):
 	di_vs, di_ts = parse_obj_file(DEFORMATION_INPUT)
 	dbf_vs, dbf_ts = parse_obj_file(DEFORMATION_BASIS_FROM)
 	dbt_vs, dbt_ts = parse_obj_file(DEFORMATION_BASIS_TO)
@@ -299,12 +315,12 @@ def export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BA
 	print('low-polygonal models:\n\tdeformation basis from has', len(dbf_ts), 'triangles and \n\tdeformation basis to has', len(dbt_ts), 'triangles.\n')
 	assert(len(dbf_ts) == len(dbt_ts))
 
-	in_planes, in_planes_for_vertex_dict = build_planes_intersect_topology(di_vs, di_ts)
+	in_planes, in_planes_for_vertex_dict = build_planes(di_vs, di_ts, topology)
 
 	# Get transformed planes
 	start_time = time.time()
 	tr_planes = get_polypoint_planes_list(in_planes, orig_basises=dbf_vs, res_basises=dbt_vs)
-	tr_vertexes  = get_transformed_vertexes_intersect_topology(in_planes_for_vertex_dict, tr_planes)
+	tr_vertexes  = get_transformed_vertexes(in_planes_for_vertex_dict, tr_planes, topology)
 	print(f"Transformation took: {time.time() - start_time} seconds")
 
 	with open(DEFORMED_OUTPUT, 'w+') as f:
@@ -318,11 +334,11 @@ def generate_pp_deformed():
     DEFORMATION_BASIS_TO_FIRST = 	'./obj/tetr/tetr_13v_screwed_div_1.obj'
     DEFORMED_OUTPUT = 				'./obj/tetr/sphere_transform/screwed/pp_tetr_13v_screwed_div_1.obj'
 
-    export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO_FIRST, DEFORMED_OUTPUT)
+    export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO_FIRST, DEFORMED_OUTPUT, Topology.Intersect)
     for div in range(10, 61, 10):
         DEFORMATION_BASIS_TO = DEFORMATION_BASIS_TO_FIRST.replace('div_1', f'div_{div}')
         DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.replace('tetr_', 'sphere_transform/screwed/pp_tetr_')
-        export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT)
+        export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT, Topology.Intersect)
         print('exported pp deformed with division', div, 'DEFORMATION_BASIS_TO:', DEFORMATION_BASIS_TO)
 
 
