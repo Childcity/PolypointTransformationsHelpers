@@ -87,8 +87,9 @@ PlaneSet = set[Plane]
 PlanesForVertex = dict[Vertex, PlaneSet]
 TriPlane = tuple[Plane, Plane, Plane]
 TriPlaneSet = set[TriPlane]
+TriPlaneForVertex = dict[Vertex, TriPlane]
 TriPlanesForVertex = dict[Vertex, TriPlaneSet]
-Topology = Enum(value='Topology', names=('Intersect Sidor'))
+Topology = Enum(value='Topology', names=('Intersect Sidor Orthogonal'))
 
 def build_planes_intersect_topology(vertexes: list, triangles: list) -> tuple[list[Plane], PlanesForVertex]:
 	planes: list[Plane] = []
@@ -157,12 +158,60 @@ def build_planes_sidor_topology(vertexes: list, triangles: list) -> tuple[list[P
 	return planes, planes_for_vertex_dict
 
 
+def build_planes_orthogonal_topology(vertexes: list, triangles: list) -> tuple[list[Plane], TriPlaneForVertex]:
+	planes: list[Plane] = []
+	planes_for_vertex_dict: TriPlaneForVertex = {
+		Vertex(*v_arr): TriPlane() for v_arr in vertexes # Initialize with empty TriPlane, to preserve order of 'vertexes'
+	}
+
+	# NOTE: planes_for_vertex_dict stores each vertex as TriPlane (3 orthogonal planes)
+
+	def append_vertex_as_tri_plane(point: list, tri_plane: TriPlane):
+		vertex_key = Vertex(*point)
+		assert vertex_key in planes_for_vertex_dict
+		planes_for_vertex_dict[vertex_key] = tri_plane
+		assert len(planes_for_vertex_dict[vertex_key]) == 3
+
+	# Generate planes for each triangle
+	plane_id = -1
+	for tri in triangles:
+		p1 = np.array(triangle_point(vertexes, tri[0]))
+		p2 = np.array(triangle_point(vertexes, tri[1]))
+		p3 = np.array(triangle_point(vertexes, tri[2]))
+
+		triangle_plane = Plane(plane_id + 1, p1, p2, p3).normalized()
+		p1p2_plane = triangle_plane.orthogonal_plane(p1, p2 - p1, plane_id + 2).normalized()
+		p2p3_plane = triangle_plane.orthogonal_plane(p2, p3 - p2, plane_id + 3).normalized()
+		p3p1_plane = triangle_plane.orthogonal_plane(p3, p1 - p3, plane_id + 4).normalized()
+
+		planes.append(triangle_plane)	# inserted at plane_id + 1
+		planes.append(p1p2_plane)		# inserted at plane_id + 2
+		planes.append(p2p3_plane)		# inserted at plane_id + 3
+		planes.append(p3p1_plane)		# inserted at plane_id + 4
+
+		if planes_for_vertex_dict[Vertex(*p1)] == TriPlane():
+			append_vertex_as_tri_plane(p1, (triangle_plane, p1p2_plane, p3p1_plane))
+
+		if planes_for_vertex_dict[Vertex(*p2)] == TriPlane():
+			append_vertex_as_tri_plane(p2, (triangle_plane, p1p2_plane, p2p3_plane))
+
+		if planes_for_vertex_dict[Vertex(*p3)] == TriPlane():
+			append_vertex_as_tri_plane(p3, (triangle_plane, p2p3_plane, p3p1_plane))
+
+		plane_id += 4
+
+	assert plane_id == len(planes) - 1
+	return planes, planes_for_vertex_dict
+
+
 def build_planes(vertexes: list, triangles: list, topology: Topology) -> tuple[list[Plane], PlanesForVertex] | tuple[list[Plane], TriPlanesForVertex]:
 	match topology:
 		case Topology.Intersect:
 			return build_planes_intersect_topology(vertexes, triangles)
 		case Topology.Sidor:
 			return build_planes_sidor_topology(vertexes, triangles)
+		case Topology.Orthogonal:
+			return build_planes_orthogonal_topology(vertexes, triangles)
 	assert False
 
 
@@ -299,10 +348,9 @@ def get_transformed_vertexes_sidor_topology(planes_for_vertex_dict: TriPlanesFor
 
 
 def get_transformed_vertexes(planes_for_vertex_dict: PlanesForVertex | TriPlanesForVertex, tr_planes: list[Plane], topology: Topology) -> list[np.array]:
-	match topology:
-		case Topology.Intersect:
+	if topology in (topology.Intersect, topology.Orthogonal):
 			return get_transformed_vertexes_intersect_topology(planes_for_vertex_dict, tr_planes)
-		case Topology.Sidor:
+	elif topology == Topology.Sidor:
 			return get_transformed_vertexes_sidor_topology(planes_for_vertex_dict, tr_planes)
 	assert False
 
@@ -332,13 +380,13 @@ def generate_pp_deformed():
     DEFORMATION_INPUT = 			'./obj/tetr/sphere_transform/icosphere.obj'
     DEFORMATION_BASIS_FROM = 		'./obj/tetr/tetr_13v.obj'
     DEFORMATION_BASIS_TO_FIRST = 	'./obj/tetr/tetr_13v_screwed_div_1.obj'
-    DEFORMED_OUTPUT = 				'./obj/tetr/sphere_transform/screwed/pp_tetr_13v_screwed_div_1.obj'
+    DEFORMED_OUTPUT = 				'./obj/tetr/sphere_transform/screwed/pp_ort_tetr_13v_screwed_div_1.obj'
 
-    export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO_FIRST, DEFORMED_OUTPUT, Topology.Intersect)
+    export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO_FIRST, DEFORMED_OUTPUT, Topology.Orthogonal)
     for div in range(10, 61, 10):
         DEFORMATION_BASIS_TO = DEFORMATION_BASIS_TO_FIRST.replace('div_1', f'div_{div}')
-        DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.replace('tetr_', 'sphere_transform/screwed/pp_tetr_')
-        export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT, Topology.Intersect)
+        DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.replace('tetr_', 'sphere_transform/screwed/pp_ort_tetr_')
+        export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT, Topology.Orthogonal)
         print('exported pp deformed with division', div, 'DEFORMATION_BASIS_TO:', DEFORMATION_BASIS_TO)
 
 

@@ -48,7 +48,7 @@ def parse_obj_file(file_path: str) -> tuple[list[float], list[float]]:
 
 # output
 def str_from_vertexes(vertexes):
-	return _str_by_prefix('v ', vertexes)
+	return _str_by_prefix('v', vertexes)
 
 def str_from_faces(faces):
 	return _str_by_prefix('f ', faces)
