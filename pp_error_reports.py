@@ -1,7 +1,7 @@
 import os
 from openpyxl import Workbook
 import numpy as np
-from RBF_exosceleton.obj_io import vertexes  # Assuming this function parses OBJ data
+from RBF_exosceleton.obj_io import *
 
 def list_files(directory, startswith, extension):
 	"""List files in a directory that start with a given string and have a given extension."""
@@ -13,13 +13,14 @@ def mean_squared_error(vertices1, vertices2):
 	vertices2 = np.array(vertices2)
 	return np.square(np.subtract(vertices1, vertices2)).mean()
 
-def generate_deformed_report(subdir, script_deformed_basename, rbf_deformed_basename, pp_deformed_basename, excel_filename):
+def generate_deformed_report(subdir, pp_sidor_deformed_basename, pp_deformed_basename, pp_ort_deformed_basename, rbf_deformed_basename, excel_filename):
 
-	all_script_deformed = list_files(subdir, script_deformed_basename, 'obj')
-	all_rbf_deformed = list_files(subdir, rbf_deformed_basename, 'obj')
+	all_pp_sidor_deformed = list_files(subdir, pp_sidor_deformed_basename, 'obj')
 	all_pp_deformed = list_files(subdir, pp_deformed_basename, 'obj')
-	
-	assert len(all_script_deformed) == len(all_rbf_deformed) == len(all_pp_deformed), "Mismatch in file counts!"
+	all_pp_ort_deformed = list_files(subdir, pp_ort_deformed_basename, 'obj')
+	all_rbf_deformed = list_files(subdir, rbf_deformed_basename, 'obj')
+
+	assert len(all_pp_sidor_deformed) == len(all_pp_deformed) == len(all_pp_ort_deformed) == len(all_rbf_deformed), "Mismatch in file counts!"
 
 	# Create Excel workbook
 	workbook = Workbook()
@@ -27,28 +28,30 @@ def generate_deformed_report(subdir, script_deformed_basename, rbf_deformed_base
 	sheet.title = f"{(excel_filename.split('.')[0]).replace('_', ' ')}"
 
 	# Write header
-	sheet.append(['Params', 'Script-RBF MSE', 'Script-PP MSE', 'RBF-PP MSE'])
+	sheet.append(['Params', 'MSE (Sidor-RBF) ', 'MSE (Intersect-RBF)', 'MSE (Orthogonal-RBF)'])
 
-	for file_index, (script_file, rbf_file, pp_file) in enumerate(zip(all_script_deformed, all_rbf_deformed, all_pp_deformed)):
-		with open(script_file, 'r') as f:
-			script_deformed_vertexes = vertexes(f.read())
-		with open(rbf_file, 'r') as f:
-			rbf_deformed_vertexes = vertexes(f.read())
+	for file_index, (pp_sidor_file, pp_file, pp_ort_file, rbf_file) in enumerate(zip(all_pp_sidor_deformed, all_pp_deformed, all_pp_ort_deformed, all_rbf_deformed)):
+		with open(pp_sidor_file, 'r') as f:
+			pp_sidor_deformed_vertexes = vertexes(f.read())
 		with open(pp_file, 'r') as f:
 			pp_deformed_vertexes = vertexes(f.read())
+		with open(pp_ort_file, 'r') as f:
+			pp_ort_deformed_vertexes = vertexes(f.read())
+		with open(rbf_file, 'r') as f:
+			rbf_deformed_vertexes = vertexes(f.read())
 
-		assert len(script_deformed_vertexes) == len(rbf_deformed_vertexes) == len(pp_deformed_vertexes), \
-			f"Vertex count mismatch in files: {script_file}, {rbf_file}, {pp_file}"
+		assert len(pp_sidor_deformed_vertexes) == len(pp_deformed_vertexes) == len(pp_ort_deformed_vertexes)== len(rbf_deformed_vertexes), \
+			f"Vertex count mismatch in files: {pp_sidor_file}, {pp_file}, {pp_ort_file}, {rbf_file}"
 
 		# Compute mean squared errors
-		mean_se_script_rbf = mean_squared_error(script_deformed_vertexes, rbf_deformed_vertexes)
-		mean_se_script_pp = mean_squared_error(script_deformed_vertexes, pp_deformed_vertexes)
-		mean_se_rbf_pp = mean_squared_error(rbf_deformed_vertexes, pp_deformed_vertexes)
+		mean_se_pp_sidor_rbf = mean_squared_error(pp_sidor_deformed_vertexes, rbf_deformed_vertexes)
+		mean_se_pp_rbf = mean_squared_error(pp_ort_deformed_vertexes, rbf_deformed_vertexes)
+		mean_se_pp_ort_rbf = mean_squared_error(pp_ort_deformed_vertexes, rbf_deformed_vertexes)
 
 		# Add row to Excel
-		params_name = all_script_deformed[file_index].split('/')[-1]
-		params_name = params_name.replace(script_deformed_basename + '_', '').replace('.obj', '')
-		sheet.append([params_name, mean_se_script_rbf, mean_se_script_pp, mean_se_rbf_pp])
+		params_name = all_pp_sidor_deformed[file_index].split('/')[-1]
+		params_name = params_name.replace(pp_sidor_deformed_basename + '_', '').replace('.obj', '')
+		sheet.append([params_name, mean_se_pp_sidor_rbf, mean_se_pp_rbf, mean_se_pp_ort_rbf])
 
 	# Save Excel file
 	excel_filepath = os.path.join(subdir, excel_filename)
@@ -57,26 +60,42 @@ def generate_deformed_report(subdir, script_deformed_basename, rbf_deformed_base
 
 
 if __name__ == "__main__":
-	root_dir = 'obj/results/'
+	# icosphere.obj screwed with tetraderal basis
+	# root_dir = 'obj/results/article/screwed/'
+ 
+	# pp_ort_tetr_13v_screwed_div_20_vs, un1_ts = parse_obj_file(root_dir + 'pp_ort_tetr_13v_screwed_div_20.obj')
+	# pp_sidor_tetr_13v_screwed_div_20_vs, un2_ts = parse_obj_file(root_dir + 'pp_sidor_tetr_13v_screwed_div_20.obj')
+	# pp_tetr_13v_screwed_div_20_vs, un3_ts = parse_obj_file(root_dir + 'pp_tetr_13v_screwed_div_20.obj')
+	# rbf_tetr_13v_screwed_div_20_vs, un4_ts = parse_obj_file(root_dir + 'rbf_tetr_13v_screwed_div_20.obj')
+ 
+	# mean_se_2_rbf = mean_squared_error(pp_sidor_tetr_13v_screwed_div_20_vs, rbf_tetr_13v_screwed_div_20_vs)
+	# mean_se_3_rbf = mean_squared_error(pp_tetr_13v_screwed_div_20_vs, rbf_tetr_13v_screwed_div_20_vs)
+	# mean_se_1_rbf = mean_squared_error(pp_ort_tetr_13v_screwed_div_20_vs, rbf_tetr_13v_screwed_div_20_vs)
+	# print(mean_se_1_rbf, mean_se_2_rbf, mean_se_3_rbf)
+ 
+	# exit(0)
+ 
+	root_dir = 'obj/results/article'
 
 	generate_deformed_report(
 		subdir = os.path.join(root_dir, 'waved/'),
-		script_deformed_basename='bunny_1_waved',
-		rbf_deformed_basename='result_rbf_deformed_1_waved',
-		pp_deformed_basename='result_pp_deformed_1_waved',
+		pp_sidor_deformed_basename='pp_sidor_tetr_13v_waved',
+		pp_ort_deformed_basename='pp_ort_tetr_13v_waved',
+		pp_deformed_basename='pp_tetr_13v_waved',
+		rbf_deformed_basename='rbf_tetr_13v_waved',
 		excel_filename='wave_deformation_report_2.xlsx'
 	)
-	generate_deformed_report(
-		subdir = os.path.join(root_dir, 'screwed/'),
-		script_deformed_basename='bunny_1_screwed',
-		rbf_deformed_basename='result_rbf_deformed_1_screwed',
-		pp_deformed_basename='result_pp_deformed_1_screwed',
-		excel_filename='screw_deformation_report_2.xlsx'
-	)
-	generate_deformed_report(
-		subdir = os.path.join(root_dir, 'squared/'),
-		script_deformed_basename='bunny_1_squared',
-		rbf_deformed_basename='result_rbf_deformed_1_squared',
-		pp_deformed_basename='result_pp_deformed_1_squared',
-		excel_filename='squared_deformation_report_2.xlsx'
-	)
+	# generate_deformed_report(
+	# 	subdir = os.path.join(root_dir, 'screwed/'),
+	# 	script_deformed_basename='bunny_1_screwed',
+	# 	rbf_deformed_basename='result_rbf_deformed_1_screwed',
+	# 	pp_deformed_basename='result_pp_deformed_1_screwed',
+	# 	excel_filename='screw_deformation_report_2.xlsx'
+	# )
+	# generate_deformed_report(
+	# 	subdir = os.path.join(root_dir, 'squared/'),
+	# 	script_deformed_basename='bunny_1_squared',
+	# 	rbf_deformed_basename='result_rbf_deformed_1_squared',
+	# 	pp_deformed_basename='result_pp_deformed_1_squared',
+	# 	excel_filename='squared_deformation_report_2.xlsx'
+	# )

@@ -60,7 +60,7 @@ def set_mesh_data(obj: Object, vertices: list):
 	bpy.ops.object.mode_set(mode='EDIT')
 
 # Main function
-def deform_mesh(input_name, deformation_basis_from_name, deformation_basis_to_name, output_name):
+def deform_mesh(input_name, deformation_basis_from_name, deformation_basis_to_name, output_name, topology):
 	input_obj = bpy.data.objects[input_name]
 	basis_from_obj = bpy.data.objects[deformation_basis_from_name]
 	basis_to_obj = bpy.data.objects[deformation_basis_to_name]
@@ -74,12 +74,12 @@ def deform_mesh(input_name, deformation_basis_from_name, deformation_basis_to_na
 	# print("Input Triangles:", input_faces)
 
 	# Build planes from faces
-	in_planes, in_planes_for_vertex_dict = build_planes_intersect_topology(input_vertices, input_faces)
+	in_planes, in_planes_for_vertex_dict = build_planes(input_vertices, input_faces, topology)
 
 	# Get transformed planes
 	start_time = time.time()
 	tr_planes = get_polypoint_planes_list(in_planes, orig_basises=basis_from_vertices, res_basises=basis_to_vertices)
-	tr_vertexes  = get_transformed_vertexes_intersect_topology(in_planes_for_vertex_dict, tr_planes)
+	tr_vertexes  = get_transformed_vertexes(in_planes_for_vertex_dict, tr_planes, topology)
 	print(f"Transformation took: {time.time() - start_time} seconds")
 
 	# Apply deformation to output object
@@ -88,10 +88,21 @@ def deform_mesh(input_name, deformation_basis_from_name, deformation_basis_to_na
 # Parameters
 DEFORMATION_INPUT = "icosphere"
 DEFORMATION_BASIS_FROM = "tetr_13v"
-DEFORMATION_BASIS_TO = "tetr_deformed_13v_4"
+DEFORMATION_BASIS_TO = "tetr_deformed_13v_4_color"
 DEFORMED_OUTPUT = "result_pp_deformed_13v_4"
+topology = Topology.Orthogonal
 
 #deform_mesh(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT)
+
+def compare_listcomp(x, y):
+    if x is None or y is None:
+        return x is None and y is None  # Both must be None to return True
+    if len(x) != len(y):  # Check length first
+        return False
+    for i, j in zip(x, y):
+        if i != j:
+            return False
+    return True
 
 last_basis_to_vertices = None
 
@@ -100,12 +111,14 @@ def update_deformation(scene):
  
 	basis_to_obj = bpy.data.objects[DEFORMATION_BASIS_TO]
 	basis_to_vertices, basis_to_faces = get_mesh_data(basis_to_obj)
-	if basis_to_vertices == last_basis_to_vertices:
+	if compare_listcomp(basis_to_vertices, last_basis_to_vertices):
+		print("No changes in", DEFORMATION_BASIS_TO, ", skipping update")
 		return
 	last_basis_to_vertices = deepcopy(basis_to_vertices)	
  
 	print(f"{DEFORMATION_BASIS_TO} updated, recalculating deformation...")
-	deform_mesh(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT)
+	deform_mesh(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT, topology)
 
 # Register the handler
+# NOTE: to auto apply, select Edit -> change vertexes -> Unselect -> Save -> Select any vertex
 bpy.app.handlers.depsgraph_update_post.append(update_deformation)

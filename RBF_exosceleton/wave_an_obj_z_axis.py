@@ -3,7 +3,7 @@ import math
 from obj_io import *
 
 def wave_an_obj_z_axis(INPUT, amplitude, period):
-    OUTPUT = INPUT.replace('.obj', f'_waved_a_{amplitude}_t_{period}.obj')
+    OUTPUT = INPUT.replace('.obj', f'_waved_a_{amplitude}_p_{period}.obj')
 
     f = open(INPUT, 'r')
     di = f.read()
@@ -27,9 +27,9 @@ def wave_an_obj_z_axis(INPUT, amplitude, period):
     f.close()
 
 def generate_waved():
-    in_model_path = './obj/bunny/bunny_1.obj'
+    in_model_path = './obj/tetr/tetr_13v.obj'
     period = 10
-    #wave_an_obj_z_axis(in_model_path, 1, period)
+    wave_an_obj_z_axis(in_model_path, 1, period)
     for amplitude in range(10, 61, 10):
         wave_an_obj_z_axis(in_model_path, amplitude, period)
         print('waved with amplitude', amplitude, 'and period', period)
