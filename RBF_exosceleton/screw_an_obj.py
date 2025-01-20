@@ -29,7 +29,8 @@ def screw_an_obj(INPUT, div):
     f.close()
 
 def generate_screwed():
-    in_model_path = './obj/tetr/tetr_13v_translated.obj'
+    # in_model_path = './obj/tetr/tetr_13v_translated.obj'
+    in_model_path = './obj/tetr/sphere_transform/icosphere.obj'
     screw_an_obj(in_model_path, 1)
     for div in range(10, 61, 10):
         screw_an_obj(in_model_path, div)
