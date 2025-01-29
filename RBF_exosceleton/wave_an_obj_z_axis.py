@@ -27,10 +27,13 @@ def wave_an_obj_z_axis(INPUT, amplitude, period):
     f.close()
 
 def generate_waved():
-    in_model_path = './obj/tetr/tetr_13v.obj'
+    #in_model_path = './obj/tetr/tetr_13v.obj'
+    #in_model_path = './obj/sphere/98v/sphere_98v.obj'
+    in_model_path = './obj/cube/cube_1.obj'
+    #in_model_path = './obj/thorus/thorus_480v.obj'
     period = 10
-    wave_an_obj_z_axis(in_model_path, 1, period)
-    for amplitude in range(10, 61, 10):
+    #wave_an_obj_z_axis(in_model_path, 1, period)
+    for amplitude in range(10, 71, 10):
         wave_an_obj_z_axis(in_model_path, amplitude, period)
         print('waved with amplitude', amplitude, 'and period', period)
 

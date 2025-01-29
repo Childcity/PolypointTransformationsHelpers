@@ -25,14 +25,17 @@ def screw_an_obj(INPUT, div):
         new_vs += [[new_x, new_y, new_z]]
 
     f = open(OUTPUT, 'w')
-    f.write(str_from_vertexes(new_vs) + str_from_faces(ts))
+    f.write(str_from_vertexes(new_vs) + '\n' + str_from_faces(ts))
     f.close()
 
 def generate_screwed():
     # in_model_path = './obj/tetr/tetr_13v_translated.obj'
-    in_model_path = './obj/tetr/sphere_transform/icosphere.obj'
+    #in_model_path = './obj/tetr/sphere_transform/sphere_80t.obj'
+    #in_model_path = './obj/sphere/sphere_80t.obj'
+    #in_model_path = './obj/thorus/thorus_480v.obj'
+    in_model_path = './obj/cube/cube_1.obj'
     screw_an_obj(in_model_path, 1)
-    for div in range(10, 61, 10):
+    for div in range(600, 901, 50):
         screw_an_obj(in_model_path, div)
         print('screw with division', div)
 

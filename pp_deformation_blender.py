@@ -22,6 +22,7 @@ import math
 import bpy
 from bpy.types import BlendDataObjects, Object
 from copy import deepcopy
+import traceback
 
 # Helper functions
 # def get_mesh_data(obj: Object):
@@ -68,6 +69,7 @@ def deform_mesh(input_name, deformation_basis_from_name, deformation_basis_to_na
 
 	# Get mesh data
 	input_vertices, input_faces = get_mesh_data(input_obj)
+	print("Input Vertices:", input_vertices[0])
 	basis_from_vertices, basis_from_faces = get_mesh_data(basis_from_obj)
 	basis_to_vertices, basis_to_faces = get_mesh_data(basis_to_obj)
 	# print("Input Vertices:", input_vertices)
@@ -86,11 +88,13 @@ def deform_mesh(input_name, deformation_basis_from_name, deformation_basis_to_na
 	set_mesh_data(output_obj, tr_vertexes)
 
 # Parameters
-DEFORMATION_INPUT = "icosphere"
-DEFORMATION_BASIS_FROM = "tetr_13v"
-DEFORMATION_BASIS_TO = "tetr_deformed_13v_4_color"
-DEFORMED_OUTPUT = "result_pp_deformed_13v_4"
-topology = Topology.Orthogonal
+DEFORMATION_INPUT = "thorus_80v"
+# DEFORMATION_BASIS_FROM = "cube_1"
+# DEFORMATION_BASIS_TO = "cube_1_screwed_div_901"
+DEFORMATION_BASIS_FROM = "icosphere_80v"
+DEFORMATION_BASIS_TO = "icosphere_deformed_80v"
+DEFORMED_OUTPUT = "pp_thorus_deformed_80v"
+topology = Topology.Intersect
 
 #deform_mesh(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT)
 
@@ -116,9 +120,16 @@ def update_deformation(scene):
 		return
 	last_basis_to_vertices = deepcopy(basis_to_vertices)	
  
-	print(f"{DEFORMATION_BASIS_TO} updated, recalculating deformation...")
-	deform_mesh(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT, topology)
+	try:
+		deform_mesh(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT, topology)
+		print(f"{DEFORMATION_BASIS_TO} updated, recalculating deformation...")
+	except Exception as e:
+		print(f"============================ Failed (topo={topology}): {traceback.format_exc()}")
 
 # Register the handler
-# NOTE: to auto apply, select Edit -> change vertexes -> Unselect -> Save -> Select any vertex
+bpy.app.handlers.depsgraph_update_post.clear()
 bpy.app.handlers.depsgraph_update_post.append(update_deformation)
+
+# NOTE: to auto apply, select Edit -> change vertexes -> Unselect -> Save -> Select any vertex.
+# NOTE: we can't mix .obj deformed models and models created in Blender because of different AXIS during export/import.
+# NOTE: export IN/OUT model and IN/OUT basises to .obj and then import them back to Blender to have comparable AXIS.
