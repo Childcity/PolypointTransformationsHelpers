@@ -14,8 +14,8 @@ def count_rmse(expected, actual):
 	mse = np.mean(square_diff, axis=0)
 	return np.sqrt(mse) # returns [RMSEx, RMSEy, RMSEz]
 
-def normilized_rmse(expected, actual):
-	rmse = rmse(expected, actual)
+def count_normilized_rmse(expected, actual):
+	rmse = count_rmse(expected, actual)
 	norm_value = np.max(expected, axis=0) - np.min(expected, axis=0)
 	#norm_value = expected.mean()
 	return rmse / norm_value # returns [RMSEx, RMSEy, RMSEz]
@@ -28,7 +28,9 @@ def generate_deformed_report(subdir, methods_deformed_basename, ethalon_deformed
 	all_files_for_ethalon_method = list_files(subdir, ethalon_deformed_basename, 'obj')
 
 	for method_basename, files in all_files_for_method.items():
-		assert len(all_files_for_ethalon_method) == len(files), "Mismatch in file counts!"
+		eth_len = len(all_files_for_ethalon_method)
+		files_len = len(files)
+		assert eth_len == files_len, f"Mismatch in file counts! {eth_len} != {files_len}"
 
 	# Create Excel workbook
 	workbook = Workbook()
@@ -47,7 +49,7 @@ def generate_deformed_report(subdir, methods_deformed_basename, ethalon_deformed
 		ethalon_deformed_vertexes, _ = parse_obj_file(ethalon_method_file_path)
   
 		for method_basename, verts in deformed_vertexes.items():
-			assert len(verts) == len(ethalon_deformed_vertexes), f"Vertex count mismatch"
+			assert len(verts) == len(ethalon_deformed_vertexes), f"Vertex count mismatch: {len(verts)} != {len(ethalon_deformed_vertexes)}"
 
 		# Compute mean squared errors
 		rmse = [
@@ -71,17 +73,16 @@ if __name__ == "__main__":
 	root_dir = 'obj/results/article'
 
 	generate_deformed_report(
-		subdir = os.path.join(root_dir, 'waved/'),
-		methods_deformed_basename=['pp_sidor_tetr_13v_waved', 'pp_ort_tetr_13v_waved', 'pp_tetr_13v_waved'],
-		ethalon_deformed_basename='rbf_tetr_13v_waved',
+		subdir = os.path.join(root_dir, 'radial_scale/'),
+		methods_deformed_basename=['pp_sidor_cube_1_radial_scale', 'pp_ort_cube_1_radial_scale', 'pp_cube_1_radial_scale', 'rbf_cube_1_radial_scale'],
+		ethalon_deformed_basename='thorus_480v_radial_scale',
 		excel_filename='wave_deformation_report_2.xlsx'
 	)
  
-	# icosphere.obj screwed with tetraderal basis
 	# generate_deformed_report(
 	# 	subdir = os.path.join(root_dir, 'screwed/'),
-	# 	methods_deformed_basename=['pp_sidor_tetr_13v_screwed', 'pp_ort_tetr_13v_screwed', 'pp_tetr_13v_screwed'],
-	# 	ethalon_deformed_basename='rbf_tetr_13v_screwed',
+	# 	methods_deformed_basename=['pp_sidor_cube_1_screwed', 'pp_ort_cube_1_screwed', 'pp_cube_1_screwed', 'rbf_cube_1_screwed'],
+	# 	ethalon_deformed_basename='thorus_480v_screwed',
 	# 	excel_filename='screw_deformation_report_2.xlsx'
 	# )
 	# generate_deformed_report(

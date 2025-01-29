@@ -51,7 +51,7 @@ def str_from_vertexes(vertexes):
 	return _str_by_prefix('v', vertexes)
 
 def str_from_faces(faces):
-	return _str_by_prefix('f ', faces)
+	return _str_by_prefix('f', faces)
 
 if __name__ == "__main__":
 	f = open('ellipsoid.obj', 'r')
