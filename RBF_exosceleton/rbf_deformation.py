@@ -104,13 +104,13 @@ def export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_B
 def generate_rbf_deformed():
 	DEFORMATION_INPUT = 			'./obj/cube_2/torus_156v.obj'
 	DEFORMATION_BASIS_FROM = 		'./obj/cube_2/cube_2.obj'
-	DEFORMATION_BASIS_TO = 	        './obj/cube_2/screwed_1_16/cube_2_screwed_div_1.obj'
-	DEFORMED_OUTPUT = 				f'./obj/cube_2/screwed_1_16/thorus_transform/rbf_cube_2_screwed_div_1.obj'
+	DEFORMATION_BASIS_TO = 	        './obj/cube_2/mul_01_10/cube_2_mul_0.1.obj'
+	DEFORMED_OUTPUT = 				f'./obj/cube_2/mul_01_10/thorus_transform/rbf_cube_2_mul_0.1.obj'
  
-	for v1 in range(1, 16, 1):
-		#v1 = round(v1 / 10, 1)
-		_DEFORMATION_BASIS_TO = DEFORMATION_BASIS_TO.replace('div_1', f'div_{v1}')
-		_DEFORMED_OUTPUT = DEFORMED_OUTPUT.replace('div_1', f'div_{v1}')
+	for v1 in range(1, 11, 1):
+		v1 = round(v1 / 10, 1)
+		_DEFORMATION_BASIS_TO = DEFORMATION_BASIS_TO.replace('0.1', f'{v1}')
+		_DEFORMED_OUTPUT = DEFORMED_OUTPUT.replace('0.1', f'{v1}')
 		export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, _DEFORMATION_BASIS_TO, _DEFORMED_OUTPUT)
 		print('exported pp deformed with v1', v1, 'DEFORMATION_BASIS_TO:', _DEFORMATION_BASIS_TO)
 
