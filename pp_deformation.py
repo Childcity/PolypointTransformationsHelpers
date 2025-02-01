@@ -382,7 +382,7 @@ def export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BA
 
 # thorus custom with cube basis
 def generate_pp_deformed():
-	topo = Topology.Sidor
+	topo = Topology.Intersect
 	topo_str = 'sidor_' if topo == Topology.Sidor else 'ort_' if topo == Topology.Orthogonal else 'intr_'
 	DEFORMATION_INPUT = 			'./obj/cube_2/torus_156v.obj'
 	DEFORMATION_BASIS_FROM = 		'./obj/cube_2/cube_2.obj'

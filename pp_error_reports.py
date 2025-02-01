@@ -19,7 +19,7 @@ def adjust_column_width(sheet):
 def list_files(directory, startswith, extension):
 	"""List files in a directory that start with a given string and have a given extension, sorted by date."""
 	files = [os.path.join(directory, f) for f in os.listdir(directory) if f.startswith(startswith) and f.endswith('.' + extension)]
-	files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+	files.sort(key=lambda x: os.path.getmtime(x), reverse=False)
 	return files
 
 def count_rmse(expected, actual):
@@ -99,13 +99,13 @@ if __name__ == "__main__":
 	root_dir = 'obj/results/article'
  
 	generate_deformed_report(
-		subdir = os.path.join(root_dir, 'screwed_1_16/'),
+		subdir = os.path.join(root_dir, 'rnd1_1_10/'),
 		methods_deformed_basename=[
-      		'pp_sidor_cube_2_screwed', 'pp_ort_cube_2_screwed',
-        	'pp_intr_cube_2_screwed', 'rbf_cube_2_screwed'
+      		'pp_sidor_cube_2_rnd1', 'pp_ort_cube_2_rnd1',
+        	'pp_intr_cube_2_rnd1', 'rbf_cube_2_rnd1'
         ],
-		ethalon_deformed_basename='torus_156v_screwed',
-		excel_filename='screwed_1_16_deformation_report.xlsx'
+		ethalon_deformed_basename='torus_156v_rnd1',
+		excel_filename='rnd1_1_10_deformation_report.xlsx'
 	)
 
 	# generate_deformed_report(
