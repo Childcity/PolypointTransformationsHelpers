@@ -82,7 +82,7 @@ def export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_B
     Yys = Ys_for_points(dbf_vs, dys)
     Yzs = Ys_for_points(dbf_vs, dzs)
 
-    start_time = time.time()
+    start_time = time.time_ns()
 
     deformed_vertices = []
     for v in di_vs:
@@ -91,54 +91,28 @@ def export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_B
         new_z = v[2] + RBF(v, Yzs, dbf_vs)
         deformed_vertices += [[new_x, new_y, new_z]]
 
-    print(f"Transformation took: {time.time() - start_time} seconds")
+    elapsed_time = (time.time_ns() - start_time) / 10e6
+    elapsed_time = round(elapsed_time, 2)
+    print(f"Transformation took: {elapsed_time} ms")
 
     f = open(DEFORMED_OUTPUT, 'w+')
     f.write(str_from_vertexes(deformed_vertices) + str_from_faces(di_ts))
+    f.write(f'\n# elapsed_time: {elapsed_time}\n')
     f.close()
 
-# icosphere.obj waved with tetraderal basis
-# def generate_rbf_deformed():
-#     topo_str = ''
-#     DEFORMATION_INPUT = 			'./obj/tetr/sphere_transform/icosphere.obj'
-#     DEFORMATION_BASIS_FROM = 		'./obj/tetr/tetr_13v.obj'
-#     DEFORMATION_BASIS_TO_FIRST = 	'./obj/tetr/tetr_13v_waved_a_1_p_10.obj'
-#     DEFORMED_OUTPUT = 				f'./obj/tetr/sphere_transform/waved/rbf_{topo_str}tetr_13v_waved_a_1_p_10.obj'
-
-#     export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO_FIRST, DEFORMED_OUTPUT)
-#     for amp in range(10, 61, 10):
-#         DEFORMATION_BASIS_TO = DEFORMATION_BASIS_TO_FIRST.replace('a_1', f'a_{amp}')
-#         DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.replace('tetr_', f'sphere_transform/waved/rbf_{topo_str}tetr_')
-#         export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT)
-#         print('exported rbf deformed with amplitude', amp, 'DEFORMATION_BASIS_TO:', DEFORMATION_BASIS_TO)
-
-
-# # icosphere.obj screwed with tetraderal basis
-# def generate_rbf_deformed():
-# 	DEFORMATION_INPUT = 			'./obj/thorus/thorus_480v.obj'
-# 	DEFORMATION_BASIS_FROM = 		'./obj/cube/cube_1.obj'
-# 	DEFORMATION_BASIS_TO_FIRST = 	'./obj/cube/cube_1_screwed_div_600.obj'
-# 	DEFORMED_OUTPUT = 				f'./obj/cube/thorus_transform/screwed/rbf_cube_1_screwed_div_600.obj'
-
-# 	#export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO_FIRST, DEFORMED_OUTPUT, Topology.Orthogonal)
-# 	for div in range(600, 901, 50):
-# 		DEFORMATION_BASIS_TO = DEFORMATION_BASIS_TO_FIRST.replace('div_600', f'div_{div}')
-# 		DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.replace('cube_', f'thorus_transform/screwed/rbf_cube_')
-# 		export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT)
-# 		print('exported rbf deformed with division', div, 'DEFORMATION_BASIS_TO:', DEFORMATION_BASIS_TO)
-
-# thorus waved with cube basis
+# thorus custom with cube basis
 def generate_rbf_deformed():
-	DEFORMATION_INPUT = 			'./obj/thorus/thorus_480v.obj'
-	DEFORMATION_BASIS_FROM = 		'./obj/cube/cube_1.obj'
-	DEFORMATION_BASIS_TO_FIRST = 	'./obj/cube/radial_scale/cube_1_radial_scale_div_100.obj'
-	DEFORMED_OUTPUT = 				f'./obj/cube/thorus_transform/radial_scale/rbf_cube_1_radial_scale_div_100.obj'
-
-	for amp in range(100, 401, 20):
-		DEFORMATION_BASIS_TO = DEFORMATION_BASIS_TO_FIRST.replace('div_100', f'div_{amp}')
-		DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.replace('radial_scale/cube_', f'thorus_transform/radial_scale/rbf_cube_')
-		export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT)
-		print('exported pp deformed with amplitude', amp, 'DEFORMATION_BASIS_TO:', DEFORMATION_BASIS_TO)
+	DEFORMATION_INPUT = 			'./obj/cube_2/torus_156v.obj'
+	DEFORMATION_BASIS_FROM = 		'./obj/cube_2/cube_2.obj'
+	DEFORMATION_BASIS_TO = 	        './obj/cube_2/screwed_1_16/cube_2_screwed_div_1.obj'
+	DEFORMED_OUTPUT = 				f'./obj/cube_2/screwed_1_16/thorus_transform/rbf_cube_2_screwed_div_1.obj'
+ 
+	for v1 in range(1, 16, 1):
+		#v1 = round(v1 / 10, 1)
+		_DEFORMATION_BASIS_TO = DEFORMATION_BASIS_TO.replace('div_1', f'div_{v1}')
+		_DEFORMED_OUTPUT = DEFORMED_OUTPUT.replace('div_1', f'div_{v1}')
+		export_rbf_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, _DEFORMATION_BASIS_TO, _DEFORMED_OUTPUT)
+		print('exported pp deformed with v1', v1, 'DEFORMATION_BASIS_TO:', _DEFORMATION_BASIS_TO)
 
 if __name__ == "__main__":
     generate_rbf_deformed()

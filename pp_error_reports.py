@@ -3,9 +3,24 @@ from openpyxl import Workbook
 import numpy as np
 from RBF_exosceleton.obj_io import *
 
+def adjust_column_width(sheet):
+	for col in sheet.columns:
+		max_length = 0
+		column = col[0].column_letter # Get the column name
+		for cell in col:
+			try:
+				if len(str(cell.value)) > max_length:
+					max_length = len(cell.value)
+			except:
+				pass
+		adjusted_width = (max_length + 2)
+		sheet.column_dimensions[column].width = adjusted_width
+
 def list_files(directory, startswith, extension):
-	"""List files in a directory that start with a given string and have a given extension."""
-	return [os.path.join(directory, f) for f in sorted(os.listdir(directory)) if f.startswith(startswith) and f.endswith('.' + extension)]
+	"""List files in a directory that start with a given string and have a given extension, sorted by date."""
+	files = [os.path.join(directory, f) for f in os.listdir(directory) if f.startswith(startswith) and f.endswith('.' + extension)]
+	files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+	return files
 
 def count_rmse(expected, actual):
 	expected = np.array(expected)
@@ -36,16 +51,22 @@ def generate_deformed_report(subdir, methods_deformed_basename, ethalon_deformed
 	workbook = Workbook()
 	sheet = workbook.active
 	sheet.title = f"{(excel_filename.split('.')[0]).replace('_', ' ')}"
-
+  
+	sheet_data1 = []
+	sheet_data2 = []
+ 
 	# Write header
-	sheet.append(['Params'] + ['MSE ' + method_basename for method_basename in methods_deformed_basename])
+	sheet_data1.append(['Params'] + ['RMSE ' + method_basename for method_basename in methods_deformed_basename])
+	sheet_data2.append(['Params'] + ['TIME ' + method_basename for method_basename in methods_deformed_basename])
 
 	for file_index, ethalon_method_file_path in enumerate(all_files_for_ethalon_method):
 		print(f"Processing file {file_index + 1}/{len(all_files_for_ethalon_method)}")
   
 		deformed_vertexes = dict()
+		deformed_vertexes_elapsed_time = dict()
 		for method_basename, files in all_files_for_method.items():
 			deformed_vertexes[method_basename], _ = parse_obj_file(files[file_index])
+			deformed_vertexes_elapsed_time[method_basename] = parse_elapsed_time(files[file_index])
 		ethalon_deformed_vertexes, _ = parse_obj_file(ethalon_method_file_path)
   
 		for method_basename, verts in deformed_vertexes.items():
@@ -56,13 +77,18 @@ def generate_deformed_report(subdir, methods_deformed_basename, ethalon_deformed
       			round(count_rmse(ethalon_deformed_vertexes, verts).mean(), 2)
          			for verts in deformed_vertexes.values()
              ]
+		elapsed_time = [ time for time in deformed_vertexes_elapsed_time.values() ]
 
 		# Add row to Excel
 		params_name = ethalon_method_file_path.split('/')[-1]
 		params_name = params_name.replace(ethalon_deformed_basename + '_', '').replace('.obj', '')
-		sheet.append([params_name] + rmse)
+		sheet_data1.append([params_name] + rmse)
+		sheet_data2.append([params_name] + elapsed_time)
 
 	# Save Excel file
+	for row in sheet_data1 + [['']] + sheet_data2:
+		sheet.append(row)
+	adjust_column_width(sheet)
 	excel_filepath = os.path.join(subdir, excel_filename)
 	workbook.save(excel_filepath)
 	print(f"Excel report generated: {excel_filepath}")
@@ -71,13 +97,26 @@ def generate_deformed_report(subdir, methods_deformed_basename, ethalon_deformed
 if __name__ == "__main__":
  
 	root_dir = 'obj/results/article'
-
+ 
 	generate_deformed_report(
-		subdir = os.path.join(root_dir, 'radial_scale/'),
-		methods_deformed_basename=['pp_sidor_cube_1_radial_scale', 'pp_ort_cube_1_radial_scale', 'pp_cube_1_radial_scale', 'rbf_cube_1_radial_scale'],
-		ethalon_deformed_basename='thorus_480v_radial_scale',
-		excel_filename='wave_deformation_report_2.xlsx'
+		subdir = os.path.join(root_dir, 'screwed_1_16/'),
+		methods_deformed_basename=[
+      		'pp_sidor_cube_2_screwed', 'pp_ort_cube_2_screwed',
+        	'pp_intr_cube_2_screwed', 'rbf_cube_2_screwed'
+        ],
+		ethalon_deformed_basename='torus_156v_screwed',
+		excel_filename='screwed_1_16_deformation_report.xlsx'
 	)
+
+	# generate_deformed_report(
+	# 	subdir = os.path.join(root_dir, 'mul_01_10/'),
+	# 	methods_deformed_basename=[
+    #   		'pp_sidor_cube_2', 'pp_ort_cube_2',
+    #     	'pp_intr_cube_2', 'rbf_cube_2'
+    #     ],
+	# 	ethalon_deformed_basename='torus_156v',
+	# 	excel_filename='mul_01_10_deformation_report.xlsx'
+	# )
  
 	# generate_deformed_report(
 	# 	subdir = os.path.join(root_dir, 'screwed/'),

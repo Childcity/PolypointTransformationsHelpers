@@ -29,15 +29,12 @@ def screw_an_obj(INPUT, div):
     f.close()
 
 def generate_screwed():
-    # in_model_path = './obj/tetr/tetr_13v_translated.obj'
-    #in_model_path = './obj/tetr/sphere_transform/sphere_80t.obj'
-    #in_model_path = './obj/sphere/sphere_80t.obj'
-    #in_model_path = './obj/thorus/thorus_480v.obj'
-    in_model_path = './obj/cube/cube_1.obj'
-    screw_an_obj(in_model_path, 1)
-    for div in range(600, 901, 50):
-        screw_an_obj(in_model_path, div)
-        print('screw with division', div)
+    in_model_path = './obj/cube_2/cube_2.obj'
+    in_model_path = './obj/cube_2/torus_156v.obj'
+    #screw_an_obj(in_model_path, 1)
+    for v1 in range(1, 16, 1):
+        screw_an_obj(in_model_path, v1)
+        print('screw with division', v1)
 
 if len(sys.argv) >= 3:
     screw_an_obj(sys.argv[1], float(sys.argv[2]), float(sys.argv[3]))

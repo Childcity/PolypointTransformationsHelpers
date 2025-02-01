@@ -46,6 +46,12 @@ def parse_obj_file(file_path: str) -> tuple[list[float], list[float]]:
 		return vertexes(obj), triangles(obj)
 	assert False
 
+def parse_elapsed_time(file_path: str) -> tuple[list[float], list[float]]:
+	with open(file_path, 'r') as f:
+		obj = f.read()
+		return _list_by_prefix('# elapsed_time: ', obj)[0][0]
+	assert False
+
 # output
 def str_from_vertexes(vertexes):
 	return _str_by_prefix('v', vertexes)
