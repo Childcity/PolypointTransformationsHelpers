@@ -82,6 +82,15 @@ class Plane:
 		return (A * x + B * y + C * z + D) ** 2 / self.length()
 
 
+class ElapsedTime:
+	def __init__(self):
+		self.start_time = time.time_ns()
+
+	def elapsed(self, round_to=1):
+		elapsed_time = (time.time_ns() - self.start_time) / 1e6
+		return round(elapsed_time, round_to)
+
+
 Vertex = collections.namedtuple('Vertex', ['x', 'y', 'z'])
 PlaneSet = set[Plane]
 PlanesForVertex = dict[Vertex, PlaneSet]
@@ -103,6 +112,7 @@ def build_planes_intersect_topology(vertexes: list, triangles: list) -> tuple[li
 		vertex_key = Vertex(*point)
 		assert vertex_key in planes_for_vertex_dict
 		planes_for_vertex_dict[vertex_key].add(plane)
+		#print(f'vertex_key {vertex_key.x} {vertex_key.y} {vertex_key.z}', len(planes_for_vertex_dict[vertex_key]))
 
 	# Generate planes for each triangle
 	for id, tri  in enumerate(triangles):
@@ -363,15 +373,16 @@ def export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BA
 	print('low-polygonal models:\n\tdeformation basis from has', len(dbf_ts), 'triangles and \n\tdeformation basis to has', len(dbt_ts), 'triangles.\n')
 	assert(len(dbf_ts) == len(dbt_ts))
 
+	elapsed = ElapsedTime()
 	in_planes, in_planes_for_vertex_dict = build_planes(di_vs, di_ts, topology)
+	print(f"Building planes took: {elapsed.elapsed()} ms")
 
 	# Get transformed planes
-	start_time = time.time_ns()
+	elapsed = ElapsedTime()
 	tr_planes = get_polypoint_planes_list(in_planes, orig_basises=dbf_vs, res_basises=dbt_vs)
 	tr_vertexes  = get_transformed_vertexes(in_planes_for_vertex_dict, tr_planes, topology)
 
-	elapsed_time = (time.time_ns() - start_time) / 10e6
-	elapsed_time = round(elapsed_time, 2)
+	elapsed_time = elapsed.elapsed()
 	print(f"Transformation took: {elapsed_time} ms")
 
 	with open(DEFORMED_OUTPUT, 'w+') as f:
