@@ -105,8 +105,6 @@ Topology = Enum(value='Topology', names=('Intersect Sidor Orthogonal'))
 exec_stat: dict[str, int] = {}
 
 def build_planes_intersect_topology(vertexes: list, triangles: list) -> tuple[list[Plane], PlanesForVertex]:
-	vertexes = np.array(vertexes)
- 
 	planes: list[Plane] = []
 	planes_for_vertex_dict: PlanesForVertex = {
 		Vertex(*v_arr): set() for v_arr in vertexes # Initialize with empty sets, to preserve order of 'vertexes'
@@ -118,7 +116,6 @@ def build_planes_intersect_topology(vertexes: list, triangles: list) -> tuple[li
 		vertex_key = Vertex(*point)
 		assert vertex_key in planes_for_vertex_dict
 		planes_for_vertex_dict[vertex_key].add(plane)
-		#print(f'vertex_key {vertex_key.x} {vertex_key.y} {vertex_key.z}', len(planes_for_vertex_dict[vertex_key]))
 
 	# Generate planes for each triangle
 	for id, tri  in enumerate(triangles):
@@ -130,9 +127,6 @@ def build_planes_intersect_topology(vertexes: list, triangles: list) -> tuple[li
 		append_vertex_as_planes(p1, plane)
 		append_vertex_as_planes(p2, plane)
 		append_vertex_as_planes(p3, plane)
-		# for point in [p1, p2, p3]:
-		# 	vertex_key = Vertex(*point)
-		# 	planes_for_vertex_dict[vertex_key].add(plane)
   
 	return planes, planes_for_vertex_dict
 
@@ -432,7 +426,7 @@ if __name__ == "__main__":
 	DEFORMED_OUTPUT = 				f'./obj/cube_2/screwed_1_16/torus_3704v_transform/pp_{topo_str}cube_2_screwed_div_5.obj'
 
 	# Run the benchmark
-	num_runs = 3
+	num_runs = 5
 	total_build_planes_time = 0
 	total_get_polypoint_planes_list_time = 0
 	total_exec_time = 0
