@@ -5,6 +5,8 @@ import time
 import collections
 from scipy.optimize import minimize
 from enum import Enum
+from datetime import datetime
+from openpyxl import Workbook, load_workbook
 
 reg_term = 1e-16
 
@@ -100,7 +102,11 @@ TriPlaneForVertex = dict[Vertex, TriPlane]
 TriPlanesForVertex = dict[Vertex, TriPlaneSet]
 Topology = Enum(value='Topology', names=('Intersect Sidor Orthogonal'))
 
+exec_stat: dict[str, int] = {}
+
 def build_planes_intersect_topology(vertexes: list, triangles: list) -> tuple[list[Plane], PlanesForVertex]:
+	vertexes = np.array(vertexes)
+ 
 	planes: list[Plane] = []
 	planes_for_vertex_dict: PlanesForVertex = {
 		Vertex(*v_arr): set() for v_arr in vertexes # Initialize with empty sets, to preserve order of 'vertexes'
@@ -124,6 +130,10 @@ def build_planes_intersect_topology(vertexes: list, triangles: list) -> tuple[li
 		append_vertex_as_planes(p1, plane)
 		append_vertex_as_planes(p2, plane)
 		append_vertex_as_planes(p3, plane)
+		# for point in [p1, p2, p3]:
+		# 	vertex_key = Vertex(*point)
+		# 	planes_for_vertex_dict[vertex_key].add(plane)
+  
 	return planes, planes_for_vertex_dict
 
 
@@ -279,7 +289,7 @@ def get_polypoint_plane(plane: Plane, orig_basises: list, res_basises: list):
 
 
 def get_polypoint_planes_list(in_planes: list[Plane], orig_basises: list, res_basises: list) -> list[Plane]:
-	start_time = time.time()
+	elapsed_time = ElapsedTime()
 	result_planes: list = list()
 
 	for plane in in_planes:
@@ -287,7 +297,7 @@ def get_polypoint_planes_list(in_planes: list[Plane], orig_basises: list, res_ba
 		assert tr_plane.id != -1
 		result_planes.append(tr_plane)
 
-	print(f"get_polypoint_planes_list(): {time.time() - start_time} seconds")
+	exec_stat["get_polypoint_planes_list"] = elapsed_time.elapsed()
 	return result_planes
 
 
@@ -375,20 +385,23 @@ def export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BA
 
 	elapsed = ElapsedTime()
 	in_planes, in_planes_for_vertex_dict = build_planes(di_vs, di_ts, topology)
-	print(f"Building planes took: {elapsed.elapsed()} ms")
+	exec_stat['plains_build_time'] = elapsed.elapsed()
 
 	# Get transformed planes
 	elapsed = ElapsedTime()
 	tr_planes = get_polypoint_planes_list(in_planes, orig_basises=dbf_vs, res_basises=dbt_vs)
 	tr_vertexes  = get_transformed_vertexes(in_planes_for_vertex_dict, tr_planes, topology)
 
-	elapsed_time = elapsed.elapsed()
-	print(f"Transformation took: {elapsed_time} ms")
+	exec_stat['total_time'] = elapsed.elapsed()
+	#print(f"Transformation took: {total_time} ms")
 
-	with open(DEFORMED_OUTPUT, 'w+') as f:
-		print('exported pp deformed to', DEFORMED_OUTPUT)
-		f.write(str_from_vertexes(tr_vertexes) + str_from_faces(di_ts))
-		f.write(f'\n# elapsed_time: {elapsed_time}\n')
+	# with open(DEFORMED_OUTPUT, 'w+') as f:
+	# 	print('exported pp deformed to', DEFORMED_OUTPUT)
+	# 	f.write(str_from_vertexes(tr_vertexes) + str_from_faces(di_ts))
+	# 	plains_build_time = exec_stat['plains_build_time']
+	# 	total_time = exec_stat['total_time']
+	# 	f.write(f'\n# plains_build_time: {plains_build_time}')
+	# 	f.write(f'\n# total_time: {total_time}\n')
 
 
 # thorus custom with cube basis
@@ -409,12 +422,57 @@ def generate_pp_deformed():
 
 
 if __name__ == "__main__":
-	generate_pp_deformed()
+	# generate_pp_deformed()
  
-#	DEFORMATION_INPUT = './obj/tetr/sphere_transform/icosphere.obj'
-#	DEFORMATION_BASIS_FROM = './obj/tetr/tetr_13v.obj'
-#	DEFORMATION_BASIS_TO = './obj/tetr/tetr_deformed_13v_3.obj'
-#	DEFORMED_OUTPUT = DEFORMATION_BASIS_TO.replace('./obj/tetr/tetr_', './obj/results/article/result_pp_')
+	topo = Topology.Intersect
+	topo_str = 'intr_' if topo == Topology.Sidor else 'ort_' if topo == Topology.Orthogonal else 'intr_'
+	DEFORMATION_INPUT = 			'./obj/cube_2/torus_3704v.obj'
+	DEFORMATION_BASIS_FROM = 		'./obj/cube_2/cube_2.obj'
+	DEFORMATION_BASIS_TO = 	        './obj/cube_2/screwed_1_16/cube_2_screwed_div_5.obj'
+	DEFORMED_OUTPUT = 				f'./obj/cube_2/screwed_1_16/torus_3704v_transform/pp_{topo_str}cube_2_screwed_div_5.obj'
 
-#	export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT)
+	# Run the benchmark
+	num_runs = 3
+	total_build_planes_time = 0
+	total_get_polypoint_planes_list_time = 0
+	total_exec_time = 0
+	csv_file = './obj/cube_2/screwed_1_16/torus_3704v_transform/benchmark_results.xlsx'
+
+	for _ in range(num_runs):
+		export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT, topo)
+	 
+		plains_build_time = exec_stat['plains_build_time']
+		get_polypoint_planes_list_time = exec_stat['get_polypoint_planes_list']
+		total_time = exec_stat['total_time']
+		print(f"Building planes took: {plains_build_time} ms")
+		print(f"get_polypoint_planes_list: {get_polypoint_planes_list_time} ms")
+		print(f"total_time: {total_time} ms")
+
+		total_build_planes_time += plains_build_time
+		total_get_polypoint_planes_list_time += get_polypoint_planes_list_time
+		total_exec_time += total_time
+
+	# Calculate averages
+	avg_build_planes_time = round(total_build_planes_time / num_runs)
+	avg_get_polypoint_planes_list_time = round(total_get_polypoint_planes_list_time / num_runs)
+	avg_total_time = round(total_exec_time / num_runs)
+
+	# Check if the XLS file exists and write the header if it doesn't
+	try:
+		wb = load_workbook(csv_file)
+		ws = wb.active
+	except FileNotFoundError:
+		wb = Workbook()
+		ws = wb.active
+		ws.append(["Timestamp", "Avg Build Planes Time (ms)", "Avg Get Polypoint Planes List Time (ms)", "Avg Total Time (ms)"])
+
+	# Append results to XLS file
+	current_time = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+	ws.append([current_time, avg_build_planes_time, avg_get_polypoint_planes_list_time, avg_total_time])
+	wb.save(csv_file)
+
+	print(f"Averages over {num_runs} runs:")
+	print(f"Average building planes time: {avg_build_planes_time} ms")
+	print(f"Average get_polypoint_planes_list time: {avg_get_polypoint_planes_list_time} ms")
+	print(f"Average total time: {avg_total_time} ms")
 
