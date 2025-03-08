@@ -7,6 +7,7 @@ from scipy.optimize import minimize
 from enum import Enum
 from datetime import datetime
 from openpyxl import Workbook, load_workbook
+from concurrent.futures import ThreadPoolExecutor
 
 reg_term = 1e-16
 
@@ -286,10 +287,26 @@ def get_polypoint_planes_list(in_planes: list[Plane], orig_basises: list, res_ba
     elapsed_time = ElapsedTime()
     result_planes: list = list()
 
-    for plane in in_planes:
-        tr_plane = get_polypoint_plane(plane, orig_basises, res_basises) # .normalized()
-        assert tr_plane.id != -1
-        result_planes.append(tr_plane)
+    def process_planes_chunk(planes_chunk):
+        print("Processing planes chunk...", len(planes_chunk))
+        tr_planes = []
+        for plane in planes_chunk:
+            tr_plane = get_polypoint_plane(plane, orig_basises, res_basises) # .normalized()
+            assert tr_plane.id != -1
+            tr_planes.append(tr_plane)
+        return tr_planes
+
+    threads_count = 4
+    chunk_size = len(in_planes) // threads_count
+    planes_chunks = [in_planes[i:i + chunk_size] for i in range(0, len(in_planes), chunk_size)]
+    for chunk in planes_chunks:
+        print(f"Chunk size: {len(chunk)} / {len(in_planes)}")
+
+    with ThreadPoolExecutor(max_workers=threads_count) as executor:
+        futures = [executor.submit(process_planes_chunk, chunk) for chunk in planes_chunks]
+        print("Waiting for futures to complete...")
+        for future in futures:
+            result_planes.extend(future.result())
 
     exec_stat["get_polypoint_planes_list"] = elapsed_time.elapsed()
     return result_planes
@@ -420,17 +437,17 @@ if __name__ == "__main__":
  
     topo = Topology.Intersect
     topo_str = 'intr_' if topo == Topology.Sidor else 'ort_' if topo == Topology.Orthogonal else 'intr_'
-    DEFORMATION_INPUT =             './obj/cube_2/torus_3704v.obj'
+    DEFORMATION_INPUT =             './obj/cube_2/torus_1670112v.obj'
     DEFORMATION_BASIS_FROM =         './obj/cube_2/cube_2.obj'
     DEFORMATION_BASIS_TO =             './obj/cube_2/screwed_1_16/cube_2_screwed_div_5.obj'
-    DEFORMED_OUTPUT =                 f'./obj/cube_2/screwed_1_16/torus_3704v_transform/pp_{topo_str}cube_2_screwed_div_5.obj'
+    DEFORMED_OUTPUT =                 f'./obj/cube_2/screwed_1_16/torus_1670112v_transform/pp_{topo_str}cube_2_screwed_div_5.obj'
 
     # Run the benchmark
-    num_runs = 5
+    num_runs = 3
     total_build_planes_time = 0
     total_get_polypoint_planes_list_time = 0
     total_exec_time = 0
-    csv_file = './obj/cube_2/screwed_1_16/torus_3704v_transform/benchmark_results.xlsx'
+    csv_file = './obj/cube_2/screwed_1_16/torus_1670112v_transform/benchmark_results.xlsx'
 
     for _ in range(num_runs):
         export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT, topo)
