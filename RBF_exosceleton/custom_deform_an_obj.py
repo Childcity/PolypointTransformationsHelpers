@@ -65,5 +65,3 @@ if __name__ == "__main__":
 # round to 2 decimal places
 # d = [[round(random.uniform(-0.5, 0.5), 2) for i in range(4)] for j in range(12)]
 # print(d)
-
-def ge
