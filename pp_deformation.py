@@ -8,6 +8,7 @@ from enum import Enum
 from datetime import datetime
 from openpyxl import Workbook, load_workbook
 from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Pool
 
 reg_term = 1e-16
 
@@ -283,30 +284,30 @@ def get_polypoint_plane(plane: Plane, orig_basises: list, res_basises: list):
     return Plane.from_abcd(plane.id, X[0], X[1], X[2], X[3])
 
 
+def process_planes_chunk(planes_chunk, orig_basises, res_basises):
+    #planes_chunk, orig_basises, res_basises = args
+    print("Processing planes chunk...", len(planes_chunk))
+    tr_planes = []
+    for plane in planes_chunk:
+        tr_plane = get_polypoint_plane(plane, orig_basises, res_basises) # .normalized()
+        assert tr_plane.id != -1
+        tr_planes.append(tr_plane)
+    return tr_planes
+
 def get_polypoint_planes_list(in_planes: list[Plane], orig_basises: list, res_basises: list) -> list[Plane]:
     elapsed_time = ElapsedTime()
     result_planes: list = list()
 
-    def process_planes_chunk(planes_chunk):
-        print("Processing planes chunk...", len(planes_chunk))
-        tr_planes = []
-        for plane in planes_chunk:
-            tr_plane = get_polypoint_plane(plane, orig_basises, res_basises) # .normalized()
-            assert tr_plane.id != -1
-            tr_planes.append(tr_plane)
-        return tr_planes
-
-    threads_count = 4
-    chunk_size = len(in_planes) // threads_count
+    n_jobs = 1
+    chunk_size = len(in_planes) // n_jobs
     planes_chunks = [in_planes[i:i + chunk_size] for i in range(0, len(in_planes), chunk_size)]
     for chunk in planes_chunks:
         print(f"Chunk size: {len(chunk)} / {len(in_planes)}")
 
-    with ThreadPoolExecutor(max_workers=threads_count) as executor:
-        futures = [executor.submit(process_planes_chunk, chunk) for chunk in planes_chunks]
-        print("Waiting for futures to complete...")
-        for future in futures:
-            result_planes.extend(future.result())
+    with Pool(processes=n_jobs) as pool:
+        results = pool.starmap(process_planes_chunk, [(chunk, orig_basises, res_basises) for chunk in planes_chunks])
+        for result in results:
+            result_planes.extend(result)
 
     exec_stat["get_polypoint_planes_list"] = elapsed_time.elapsed()
     return result_planes
@@ -437,17 +438,17 @@ if __name__ == "__main__":
  
     topo = Topology.Intersect
     topo_str = 'intr_' if topo == Topology.Sidor else 'ort_' if topo == Topology.Orthogonal else 'intr_'
-    DEFORMATION_INPUT =             './obj/cube_2/torus_1670112v.obj'
+    DEFORMATION_INPUT =             './obj/cube_2/torus_416912v.obj'
     DEFORMATION_BASIS_FROM =         './obj/cube_2/cube_2.obj'
     DEFORMATION_BASIS_TO =             './obj/cube_2/screwed_1_16/cube_2_screwed_div_5.obj'
-    DEFORMED_OUTPUT =                 f'./obj/cube_2/screwed_1_16/torus_1670112v_transform/pp_{topo_str}cube_2_screwed_div_5.obj'
+    DEFORMED_OUTPUT =                 f'./obj/cube_2/screwed_1_16/torus_742792v_transform/pp_{topo_str}cube_2_screwed_div_5.obj'
 
     # Run the benchmark
-    num_runs = 3
+    num_runs = 1
     total_build_planes_time = 0
     total_get_polypoint_planes_list_time = 0
     total_exec_time = 0
-    csv_file = './obj/cube_2/screwed_1_16/torus_1670112v_transform/benchmark_results.xlsx'
+    csv_file = './obj/cube_2/screwed_1_16/torus_742792v_transform/benchmark_results.xlsx'
 
     for _ in range(num_runs):
         export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BASIS_TO, DEFORMED_OUTPUT, topo)
