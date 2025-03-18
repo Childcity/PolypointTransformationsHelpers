@@ -397,6 +397,8 @@ def export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BA
 
     elapsed = ElapsedTime()
     in_planes, in_planes_for_vertex_dict = build_planes(di_vs, di_ts, topology)
+    # write_planes_to_file_txt(in_planes, DEFORMED_OUTPUT)
+    # exit(0)
     exec_stat['plains_build_time'] = elapsed.elapsed()
 
     # Get transformed planes
@@ -414,6 +416,21 @@ def export_pp_deformed(DEFORMATION_INPUT, DEFORMATION_BASIS_FROM, DEFORMATION_BA
     #     total_time = exec_stat['total_time']
     #     f.write(f'\n# plains_build_time: {plains_build_time}')
     #     f.write(f'\n# total_time: {total_time}\n')
+
+
+def write_planes_to_file_txt(planes: list[Plane], filename: str):
+    buffer = []
+
+    for plane in planes:
+        buffer.append(f"{plane.A} {plane.B} {plane.C} {plane.D}\n")
+
+    with open(filename, 'w') as f:
+        f.writelines(buffer)
+
+
+def write_planes_to_file_bin(planes: list[Plane], filename: str):
+    planes = np.array([[plane.A, plane.B, plane.C, plane.D] for plane in planes], dtype=np.float64)
+    planes.tofile(f'{filename}.npy')
 
 
 # thorus custom with cube basis
