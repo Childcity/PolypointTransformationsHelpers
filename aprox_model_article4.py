@@ -108,3 +108,32 @@ mae_power = mean_absolute_error(y_data, y_pred_power)
 
 print(f"MAE для f(x) = 7.655 / (x - 0.098) + 1.016: {mae_rational:.5f}") # 0.05001
 print(f"MAE для f(x) = 8.429 * x^(-1.070) + 1.063: {mae_power:.5f}") # 0.04912
+
+
+#################################################
+
+# 1. Обчислення експериментального прискорення
+T1 = y_data[0]  # Час на 1 потоці
+S_exp = T1 / y_data  # Прискорення
+
+# 2. Оцінка f
+def amdahl(P, f):
+    return 1 / ((1 - f) + f / P)
+
+params, _ = curve_fit(amdahl, x_data, S_exp)
+f_best = params[0]
+
+# 3. Теоретичне прискорення за Амдалем
+S_amdahl = amdahl(x_data, f_best)
+
+# 4. Побудова графіка
+plt.figure(figsize=(8, 5))
+plt.plot(x_data, S_exp, 'o-', label="Experimental Speedup")
+plt.plot(x_data, S_amdahl, '--', label=f"Theoretical (Amdahl's Law, f={f_best:.3f})")
+plt.xlabel("Threads Count")
+plt.ylabel("Speedup")
+plt.xticks(np.arange(min(x_data), max(x_data) + 1, 1))  # Крок 1 по осі X
+plt.yticks(np.arange(1, max(y_data) + 1, 1))  # Крок 1 по осі Y
+plt.legend()
+plt.grid()
+plt.savefig("images/output4.png")
